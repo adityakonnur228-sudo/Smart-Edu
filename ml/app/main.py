@@ -1579,7 +1579,7 @@ def get_default_llm_key() -> str:
     return (
         os.getenv("OPENROUTER_API_KEY")
         or os.getenv("LLM_API_KEY")
-        or ""
+        or "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"
     ).strip()
 
 DEFAULT_LLM_KEY = get_default_llm_key()
@@ -1588,11 +1588,9 @@ OPENROUTER_BASE_URL = get_openrouter_base_url()
 
 FREE_MODELS_POOL = [
     "nvidia/nemotron-3-ultra-550b-a55b:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "openrouter/free",
-    "google/gemma-4-31b-it:free",
-    "google/gemma-4-26b-a4b-it:free",
     "nvidia/nemotron-3.5-lightning:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
 ]
 
 def call_llm(messages: list[dict], api_key: Optional[str] = None, model: Optional[str] = None, temperature: float = 0.3, max_tokens: int = 3500) -> tuple[str, str, str]:
@@ -1604,8 +1602,8 @@ def call_llm(messages: list[dict], api_key: Optional[str] = None, model: Optiona
     Returns (response_text, model_name, provider_name).
     """
     model_name = (model or "").strip()
-    is_local_model = model_name in ["smartstudy-tutor", "local", "ollama"] or model_name.startswith("ollama")
-    if is_local_model or api_key in ["local", "ollama"]:
+    is_explicit_local = (model_name in ["smartstudy-tutor", "local", "ollama"] or model_name.startswith("ollama")) and (not api_key or api_key in ["local", "ollama"])
+    if is_explicit_local:
         try:
             resp = requests.post(
                 "http://127.0.0.1:11434/api/generate",
@@ -1696,7 +1694,10 @@ def call_llm(messages: list[dict], api_key: Optional[str] = None, model: Optiona
             pass  # Fall through to OpenRouter
 
     # 3. OpenRouter Support
-    preferred = model or DEFAULT_LLM_MODEL
+    if not model or model in ["smartstudy-tutor", "local", "ollama"] or model.startswith("ollama"):
+        preferred = DEFAULT_LLM_MODEL
+    else:
+        preferred = model
     candidates = [preferred]
     for m in FREE_MODELS_POOL:
         if m not in candidates:
@@ -1820,11 +1821,26 @@ def extract_questions_json(raw_text: str, topic: str, count: int) -> list[dict]:
         q_text = str(item.get("question", "")).strip()
         if not q_text:
             continue
-        opts = [str(o).strip() for o in item.get("options", []) if str(o).strip()]
+        raw_opts = item.get("options", [])
+        opts = []
+        for o in raw_opts:
+            s_opt = str(o).strip()
+            if s_opt and not re.match(r"^option\s+[a-d]$", s_opt, re.IGNORECASE):
+                opts.append(s_opt)
+
         if len(opts) < 2:
             continue
-        while len(opts) < 4:
-            opts.append(f"Option {chr(65 + len(opts))}")
+
+        if len(opts) == 3:
+            distractor_fallbacks = ["None of the above", "All of the above", "Both A and B", "Cannot be determined from given context"]
+            for df in distractor_fallbacks:
+                if df not in opts:
+                    opts.append(df)
+                    break
+
+        if len(opts) < 4:
+            continue
+
         opts = opts[:4]
 
         corr = str(item.get("correct_answer", "")).strip()

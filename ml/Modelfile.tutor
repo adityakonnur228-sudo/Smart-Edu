@@ -1,4 +1,4 @@
-FROM qwen3.5:4b
+FROM qwen2.5-coder:1.5b
 
 # Optimized Hyperparameters for Qwen 3.5 4.2B on NVIDIA RTX 3050 (4 GB VRAM)
 PARAMETER temperature 0.20

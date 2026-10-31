@@ -20,10 +20,10 @@ import {
   Search,
   BookOpen,
   PlayCircle,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
-import { Page3DScrollScene } from "@/components/3d/page-3d-scroll-scene";
 
 interface InteractiveQuizState {
   selectedOption: number | null;
@@ -53,8 +53,6 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-[#080D1C] text-brand-light overflow-x-hidden selection:bg-primary-action/30 selection:text-white">
-      {/* Unified 3D Knowledge Core Model Spanning Entire Page with Cinematic Scroll Transformation */}
-      <Page3DScrollScene />
 
       {/* Top Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border-subtle/40 bg-[#080D1C]/85 backdrop-blur-md h-14">
@@ -168,7 +166,8 @@ export default function HomePage() {
                     className="inline-flex items-center gap-1.5 text-xs font-mono text-[#C4CEE4] hover:text-[#55D6E8] transition-colors px-3 py-2 rounded-lg hover:bg-white/5"
                   >
                     <PlayCircle size={14} className="text-ai-accent" />
-                    Live Interactive Demo ↓
+                    <span>Live Interactive Demo</span>
+                    <ChevronDown size={13} className="text-[#55D6E8]" />
                   </a>
                 </div>
 
@@ -213,7 +212,7 @@ export default function HomePage() {
                       <span className="h-2 w-2 rounded-full bg-[#4ADEA6]" />
                     </div>
                     <span className="text-xs font-mono font-medium text-white ml-1.5">
-                      ai-knowledge-core.mesh
+                      ai-grounded-session.core
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -224,19 +223,38 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Open Viewport Window framing the 3D model */}
-                <div className="relative h-60 sm:h-64 pointer-events-none flex items-center justify-center">
-                  <div className="absolute top-2 left-2 text-[9px] font-mono text-[#55D6E8]/70 uppercase tracking-wider">
-                    [RTX 3050 · 4GB VRAM]
+                {/* Central Verified Source & Citation Stream */}
+                <div className="relative py-4 space-y-3 z-10">
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-[#55D6E8] bg-[#55D6E8]/10 px-2 py-0.5 rounded border border-[#55D6E8]/20">
+                      RTX 3050 · 4GB VRAM
+                    </span>
+                    <span className="text-[#4ADEA6] bg-[#4ADEA6]/10 px-2 py-0.5 rounded border border-[#4ADEA6]/20">
+                      <span className="inline-flex items-center gap-1"><Zap size={11} className="text-[#4ADEA6]" /> 18ms Latency</span>
+                    </span>
                   </div>
-                  <div className="absolute top-2 right-2 text-[9px] font-mono text-[#4ADEA6]/70">
-                    ⚡ 18ms Latency
-                  </div>
-                  <div className="absolute bottom-2 left-2 text-[9px] font-mono text-[#C4CEE4]/60">
-                    Cellular Biology · p. 42
-                  </div>
-                  <div className="absolute bottom-2 right-2 text-[9px] font-mono text-[#7185FF]/70">
-                    0.984 Cosine Sim
+
+                  <div className="rounded-xl border border-border-subtle/80 bg-[#080D1C]/90 p-3.5 backdrop-blur-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#7185FF]">
+                        <FileCheck size={12} className="text-[#7185FF]" />
+                        Cellular Biology · p. 42
+                      </span>
+                      <span className="text-[10px] font-mono text-[#4ADEA6] bg-[#4ADEA6]/10 px-1.5 py-0.5 rounded">
+                        0.984 Cosine Sim
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-text-secondary leading-relaxed font-mono bg-[#050811]/60 p-2.5 rounded-lg border border-border-subtle/40">
+                      &ldquo;Active transport mechanisms pump sodium ions against steep electrochemical gradients requiring intracellular ATP hydrolysis...&rdquo;
+                    </p>
+                    <div className="mt-2.5 flex items-center justify-between text-[11px]">
+                      <span className="text-text-muted flex items-center gap-1">
+                        <CheckCircle2 size={12} className="text-[#4ADEA6]" /> Grounded Source Verified
+                      </span>
+                      <span className="text-[10px] font-mono text-[#55D6E8]">
+                        smartstudy-tutor
+                      </span>
+                    </div>
                   </div>
                 </div>
 

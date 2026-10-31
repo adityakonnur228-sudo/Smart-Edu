@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronUp, ArrowRight } from "lucide-react";
+
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -100,7 +102,7 @@ export function MarkdownView({
           }}
           className="hover:underline hover:text-[#899AFF]"
         >
-          {expanded ? "Show less ↑" : "Read full summary →"}
+          {expanded ? (<>Show less <ChevronUp size={12} className="inline ml-1" /></>) : (<>Read full summary <ArrowRight size={12} className="inline ml-1" /></>)}
         </button>
       )}
     </div>

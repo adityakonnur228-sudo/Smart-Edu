@@ -410,19 +410,19 @@ export default function TutorPage() {
       const code = error?.code;
       const rawMsg = error?.message || "An unexpected error occurred.";
 
-      let contentMsg = `⚠️ **Error**: ${rawMsg}`;
+      let contentMsg = `**Error**: ${rawMsg}`;
       if (status === 401 || status === 403 || code === "UNAUTHORIZED" || code === "FORBIDDEN" || rawMsg.includes("403") || rawMsg.includes("401")) {
-        contentMsg = `⚠️ **Session Expired / Authentication Required**\n\nYour login session has expired or you are not currently signed in.\n\nPlease **[Click here to Log In](/login?redirect=/ai-tutor)** to continue your conversation.`;
+        contentMsg = `**Session Expired / Authentication Required**\n\nYour login session has expired or you are not currently signed in.\n\nPlease **[Click here to Log In](/login?redirect=/ai-tutor)** to continue your conversation.`;
       } else if (status === 422 || code === "VALIDATION_ERROR") {
-        contentMsg = `⚠️ **Input Validation**: ${rawMsg.replace(/HTTP 422:?\s*/i, "")}`;
+        contentMsg = `**Input Validation**: ${rawMsg.replace(/HTTP 422:?\s*/i, "")}`;
       } else if (status === 400 || status === 404 || code === "MODEL_ERROR") {
-        contentMsg = `⚠️ **Model Configuration**: ${rawMsg.replace(/HTTP (400|404):?\s*/i, "")}`;
+        contentMsg = `**Model Configuration**: ${rawMsg.replace(/HTTP (400|404):?\s*/i, "")}`;
       } else if (status === 504 || code === "TIMEOUT_ERROR") {
-        contentMsg = `⚠️ **Request Timeout**: The local AI engine took too long to complete generation. Try asking a more specific question or using a shorter context.`;
+        contentMsg = `**Request Timeout**: The local AI engine took too long to complete generation. Try asking a more specific question or using a shorter context.`;
       } else if (status === 503 || code === "SERVICE_UNAVAILABLE" || rawMsg.includes("Connection refused") || rawMsg.includes("Failed to fetch")) {
-        contentMsg = `⚠️ **Local AI Unavailable**: Could not connect to local Ollama on http://127.0.0.1:11434. Please check that Ollama is running.`;
+        contentMsg = `**Local AI Unavailable**: Could not connect to local Ollama on http://127.0.0.1:11434. Please check that Ollama is running.`;
       } else if (status === 409) {
-        contentMsg = `⚠️ **Document Processing**: ${rawMsg}`;
+        contentMsg = `**Document Processing**: ${rawMsg}`;
       }
 
       const tutorReply: ChatMessage = {

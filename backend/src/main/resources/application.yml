@@ -48,7 +48,7 @@ app:
   max-upload-mb: ${MAX_UPLOAD_MB:20}
   user-storage-quota-mb: ${USER_STORAGE_QUOTA_MB:500}
   dev-seed-enabled: ${DEV_SEED_ENABLED:false}
-  openrouter-api-key: ${OPENROUTER_API_KEY:${LLM_API_KEY:}}
+  openrouter-api-key: ${OPENROUTER_API_KEY:${LLM_API_KEY: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}}
   # Local Ollama AI Configuration
   ollama-base-url: ${OLLAMA_BASE_URL:http://127.0.0.1:11434}
   ollama-chat-model: ${OLLAMA_CHAT_MODEL:smartstudy-tutor}

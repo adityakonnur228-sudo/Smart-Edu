@@ -94,6 +94,17 @@ public class QuizController {
                 .toList();
     }
 
+    @GetMapping("/config")
+    public Map<String, Object> getConfig() {
+        boolean hasServerKey = defaultOpenRouterApiKey != null && !defaultOpenRouterApiKey.isBlank();
+        String defaultModel = hasServerKey ? "nvidia/nemotron-3-ultra-550b-a55b:free" : "smartstudy-tutor";
+        return Map.of(
+                "hasServerKey", hasServerKey,
+                "defaultModel", defaultModel,
+                "provider", hasServerKey ? "openrouter" : "local"
+        );
+    }
+
     @PostMapping("/test-key")
     public ResponseEntity<?> testKey(
             @RequestBody(required = false) Map<String, String> body,
@@ -113,9 +124,11 @@ public class QuizController {
         if (model == null || model.isBlank()) {
             model = clientLlmModel;
         }
-        boolean isLocal = model != null && (model.equalsIgnoreCase("smartstudy-tutor") || model.equalsIgnoreCase("local") || model.toLowerCase().startsWith("ollama"));
-        if ((key == null || key.isBlank()) && !isLocal) {
+        if (key == null || key.isBlank()) {
             key = defaultOpenRouterApiKey;
+        }
+        if (model == null || model.isBlank()) {
+            model = (key != null && !key.isBlank()) ? "nvidia/nemotron-3-ultra-550b-a55b:free" : "smartstudy-tutor";
         }
 
         try {
@@ -146,23 +159,23 @@ public class QuizController {
             input = new GenerateRequest(null, null, 5, null, null);
         }
 
-        String model = (input.model() != null && !input.model().isBlank())
-                ? input.model().trim()
-                : (clientLlmModel != null && !clientLlmModel.isBlank())
-                    ? clientLlmModel.trim()
-                    : "smartstudy-tutor";
-
-        boolean isLocal = model != null && (model.equalsIgnoreCase("smartstudy-tutor") || model.equalsIgnoreCase("local") || model.toLowerCase().startsWith("ollama"));
-
         String clientApiKey = (input.apiKey() != null && !input.apiKey().isBlank())
                 ? input.apiKey().trim()
                 : (clientOpenRouterApiKey != null && !clientOpenRouterApiKey.isBlank())
                     ? clientOpenRouterApiKey.trim()
                     : (clientLlmApiKey != null && !clientLlmApiKey.isBlank())
                         ? clientLlmApiKey.trim()
-                        : (!isLocal && defaultOpenRouterApiKey != null && !defaultOpenRouterApiKey.isBlank())
+                        : (defaultOpenRouterApiKey != null && !defaultOpenRouterApiKey.isBlank())
                             ? defaultOpenRouterApiKey.trim()
                             : "";
+
+        String model = (input.model() != null && !input.model().isBlank())
+                ? input.model().trim()
+                : (clientLlmModel != null && !clientLlmModel.isBlank())
+                    ? clientLlmModel.trim()
+                    : (!clientApiKey.isBlank())
+                        ? "nvidia/nemotron-3-ultra-550b-a55b:free"
+                        : "smartstudy-tutor";
 
         String topicName = input.topic() != null ? input.topic().trim() : "";
         Long targetMaterialId = input.materialId();

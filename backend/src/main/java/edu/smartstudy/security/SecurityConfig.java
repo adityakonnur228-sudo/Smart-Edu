@@ -54,6 +54,9 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(a -> a
+                .requestMatchers(HttpMethod.GET,
+                    "/api/v1/quizzes/config"
+                ).permitAll()
                 .requestMatchers(HttpMethod.POST,
                     "/api/v1/auth/register",
                     "/api/v1/auth/login",
