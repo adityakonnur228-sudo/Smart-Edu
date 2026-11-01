@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ChangeEvent } from "react";
 import Link from "next/link";
@@ -130,8 +130,8 @@ export default function QuizzesPage() {
   const loadData = useCallback(async () => {
     try {
       const [materialsRes, quizzesRes] = await Promise.all([
-        fetch(`${API}/materials`, { credentials: "include" }),
-        fetch(`${API}/quizzes`, { credentials: "include" }),
+        fetch(`${API}/materials`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/quizzes`, { credentials: "include", headers: getAuthHeaders() }),
       ]);
 
       if (materialsRes.status === 401 || materialsRes.status === 403) {

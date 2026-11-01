@@ -223,3 +223,4 @@ Once `origin main` is updated, deploy the services following the step-by-step gu
 
 3. **Ollama / Remote Inference:**
    - Configure remote secured Ollama instance via `OLLAMA_BASE_URL` and `OLLAMA_API_KEY`, or connect OpenRouter via `OPENROUTER_API_KEY`.
+

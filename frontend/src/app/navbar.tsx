@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders, setAuthToken } from "@/lib/api";
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -61,7 +61,7 @@ export function Navbar({ customRightAction }: { customRightAction?: React.ReactN
 
   useEffect(() => {
     let isMounted = true;
-    fetch(`${API}/auth/me`, { credentials: "include" })
+    fetch(`${API}/auth/me`, { credentials: "include", headers: getAuthHeaders() })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (isMounted && data) setUser(data);
@@ -89,8 +89,9 @@ export function Navbar({ customRightAction }: { customRightAction?: React.ReactN
   async function handleLogout() {
     setLoggingOut(true);
     try {
-      await fetch(`${API}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
+      await fetch(`${API}/auth/logout`, { method: "POST", credentials: "include", headers: getAuthHeaders() }).catch(() => {});
     } finally {
+      setAuthToken(null);
       router.push("/login");
     }
   }

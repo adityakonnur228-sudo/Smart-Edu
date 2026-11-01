@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { useCallback, useEffect, useState, useMemo, type FormEvent } from "react";
 import Link from "next/link";
@@ -80,8 +80,8 @@ export default function TasksPage() {
   const loadData = useCallback(async () => {
     try {
       const [taskRes, planRes] = await Promise.all([
-        fetch(`${API}/tasks`, { credentials: "include" }),
-        fetch(`${API}/plans/current`, { credentials: "include" }),
+        fetch(`${API}/tasks`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/plans/current`, { credentials: "include", headers: getAuthHeaders() }),
       ]);
 
       if (taskRes.status === 401) {

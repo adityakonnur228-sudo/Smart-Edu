@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -39,6 +39,17 @@ import {
 export default function AnalyticsPage() {
   const router = useRouter();
   const invalidateAnalytics = useInvalidateAnalytics();
+  // Authentication check on mount
+  useEffect(() => {
+    fetch(`${API}/auth/me`, { credentials: "include", headers: getAuthHeaders() })
+      .then((res) => {
+        if (res.status === 401 || res.status === 403) {
+          router.push("/login?redirect=/analytics");
+        }
+      })
+      .catch(() => {});
+  }, [router]);
+
 
   const {
     data: overview,

@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -125,9 +125,9 @@ function FocusPageContent() {
   const load = useCallback(async () => {
     try {
       const [sessRes, histRes, tasksRes] = await Promise.all([
-        fetch(`${API}/focus/sessions/active`, { credentials: "include" }),
-        fetch(`${API}/focus/sessions/history`, { credentials: "include" }),
-        fetch(`${API}/tasks`, { credentials: "include" }),
+        fetch(`${API}/focus/sessions/active`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/focus/sessions/history`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/tasks`, { credentials: "include", headers: getAuthHeaders() }),
       ]);
 
       if (sessRes.status === 401) {

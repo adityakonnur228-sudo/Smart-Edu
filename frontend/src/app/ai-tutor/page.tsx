@@ -41,7 +41,7 @@ import {
   type TutorConversationPage,
 } from "@/hooks/useTutor";
 import { useMaterials, useUploadMaterial } from "@/hooks/useMaterials";
-import {  api , API } from "@/lib/api";
+import { api, API, getAuthHeaders } from "@/lib/api";
 
 type ChatMessage = {
   id: string | number;
@@ -105,7 +105,7 @@ export default function TutorPage() {
 
   // Auth verification
   useEffect(() => {
-    fetch(`${API}/auth/me`, { credentials: "include" })
+    fetch(`${API}/auth/me`, { credentials: "include", headers: getAuthHeaders() })
       .then((res) => {
         if (res.status === 401 || res.status === 403) {
           router.push("/login?redirect=/ai-tutor");
@@ -264,7 +264,7 @@ export default function TutorPage() {
         });
       })
       .catch((err) => {
-        console.error("Failed to load conversation details:", err);
+        if (err?.status !== 401) { console.error("Failed to load conversation details:", err); }
       })
       .finally(() => {
         if (isSubscribed) setLoadingConvId(null);

@@ -32,8 +32,14 @@ public class SecurityConfig {
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toList()));
         }
+        origins.add("http://localhost");
+        origins.add("http://127.0.0.1");
+        origins.add("https://localhost");
+        origins.add("https://127.0.0.1");
         origins.add("http://localhost:[*]");
         origins.add("http://127.0.0.1:[*]");
+        origins.add("https://localhost:[*]");
+        origins.add("https://127.0.0.1:[*]");
         c.setAllowedOriginPatterns(origins);
         c.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS", "PUT"));
         c.setAllowedHeaders(List.of("*", "Content-Type", "Authorization", "X-CSRF-TOKEN", "X-OpenRouter-Api-Key", "X-LLM-Api-Key", "X-LLM-Model", "Accept", "Origin", "X-Requested-With"));
@@ -75,6 +81,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST,
                     "/api/v1/auth/register",
                     "/api/v1/auth/login",
+                    "/api/v1/auth/refresh",
                     "/api/v1/auth/forgot-password",
                     "/api/v1/auth/reset-password",
                     "/api/v1/auth/verify-email",

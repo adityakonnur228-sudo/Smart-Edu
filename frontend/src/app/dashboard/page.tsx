@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { useCallback, useEffect, useState, useMemo, type ChangeEvent } from "react";
 import Link from "next/link";
@@ -89,10 +89,10 @@ export default function Dashboard() {
   const loadData = useCallback(async () => {
     try {
       const [userRes, materialsRes, overviewRes, tasksRes] = await Promise.all([
-        fetch(`${API}/auth/me`, { credentials: "include" }),
-        fetch(`${API}/materials`, { credentials: "include" }),
-        fetch(`${API}/progress/overview`, { credentials: "include" }).catch(() => null),
-        fetch(`${API}/tasks`, { credentials: "include" }).catch(() => null),
+        fetch(`${API}/auth/me`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/materials`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/progress/overview`, { credentials: "include", headers: getAuthHeaders() }).catch(() => null),
+        fetch(`${API}/tasks`, { credentials: "include", headers: getAuthHeaders() }).catch(() => null),
       ]);
 
       if (userRes.status === 401) {
@@ -149,7 +149,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!hasProcessing) return;
     const interval = setInterval(() => {
-      fetch(`${API}/materials`, { credentials: "include" })
+      fetch(`${API}/materials`, { credentials: "include", headers: getAuthHeaders() })
         .then((res) => (res.ok ? res.json() : null))
         .then((raw) => {
           if (raw) {

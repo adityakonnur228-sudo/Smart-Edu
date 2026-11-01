@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -195,11 +195,11 @@ export default function AdminPage() {
   const loadData = useCallback(async () => {
     try {
       const [meRes, uRes, sRes, dRes, aRes] = await Promise.all([
-        fetch(`${API}/auth/me`, { credentials: "include" }),
-        fetch(`${API}/admin/users`, { credentials: "include" }),
-        fetch(`${API}/admin/system`, { credentials: "include" }),
-        fetch(`${API}/admin/documents`, { credentials: "include" }),
-        fetch(`${API}/admin/recent-activity`, { credentials: "include" }),
+        fetch(`${API}/auth/me`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/admin/users`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/admin/system`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/admin/documents`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/admin/recent-activity`, { credentials: "include", headers: getAuthHeaders() }),
       ]);
 
       if (uRes.status === 401 || sRes.status === 401) {

@@ -1,9 +1,9 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, setAuthToken } from "@/lib/api";
 
-import { FormEvent, useState, useId } from "react";
+import { FormEvent, useState, useId, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Check,
@@ -24,10 +24,13 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 
-// Using centralized API endpoint from @/lib/api
-
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const reasonParam = searchParams.get("reason");
+  const isSessionExpired = reasonParam === "session_expired";
+
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
@@ -50,6 +53,25 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const hasNumberOrSymbol = /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
 
+  function handleAuthSuccess(userRole: string, token?: string) {
+    if (token) {
+      setAuthToken(token);
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("smartstudy:auth_change"));
+    }
+
+    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+      router.push(redirectParam);
+    } else if (userRole === "ADMIN") {
+      router.push("/admin");
+    } else if (userRole === "PARENT") {
+      router.push("/parent");
+    } else {
+      router.push("/dashboard");
+    }
+  }
+
   async function performLogin(targetEmail: string, targetPass: string) {
     setBusy(true);
     setError("");
@@ -64,13 +86,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       if (!res.ok) {
         throw new Error(body.message || body.error || body.detail || "Unable to sign in. Please verify your credentials.");
       }
-      if (body.role === "ADMIN") {
-        router.push("/admin");
-      } else if (body.role === "PARENT") {
-        router.push("/parent");
-      } else {
-        router.push("/dashboard");
-      }
+      handleAuthSuccess(body.role, body.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "The API could not be reached. Ensure the backend server is running.");
     } finally {
@@ -108,10 +124,11 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       }
 
       if (isLogin) {
-        if (data.role === "ADMIN") router.push("/admin");
-        else if (data.role === "PARENT") router.push("/parent");
-        else router.push("/dashboard");
+        handleAuthSuccess(data.role, data.token);
       } else {
+        if (data.token) {
+          setAuthToken(data.token);
+        }
         await performLogin(email, password);
       }
     } catch (err) {
@@ -324,8 +341,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
                         onChange={(e) => setRole(e.target.value)}
                         className="w-full h-12 sm:h-13 px-4 rounded-xl border border-[#1E2D4A] bg-[#0D1527] text-sm sm:text-base text-[#F1F5F9] focus:border-[#8999FF] focus:outline-none focus:ring-1 focus:ring-[#8999FF] transition-all"
                       >
-                        <option value="STUDENT">Student (Study materials, quizzes & tasks)</option>
-                        <option value="PARENT">Parent (Monitor student progress & ledger)</option>
+                        <option value="STUDENT">Student — Study, practice tests & AI tutor</option>
+                        <option value="PARENT">Parent — View progress & study activity</option>
                       </select>
                     </div>
                   </>
@@ -349,14 +366,14 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label htmlFor={passwordId} className="text-xs sm:text-sm font-medium text-[#CBD5E1] font-mono">
+                    <label htmlFor={passwordId} className="block text-xs sm:text-sm font-medium text-[#CBD5E1] font-mono">
                       Password
                     </label>
                     {isLogin && (
                       <button
                         type="button"
                         onClick={() => setForgotModalOpen(true)}
-                        className="text-xs text-[#8999FF] hover:underline font-mono"
+                        className="text-xs text-[#8999FF] hover:underline cursor-pointer"
                       >
                         Forgot password?
                       </button>
@@ -371,34 +388,46 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full h-12 sm:h-13 px-4 pr-11 rounded-xl border border-[#1E2D4A] bg-[#0D1527] text-sm sm:text-base text-[#F1F5F9] placeholder-[#64748B] focus:border-[#8999FF] focus:outline-none focus:ring-1 focus:ring-[#8999FF] transition-all font-mono"
+                      className="w-full h-12 sm:h-13 px-4 pr-11 rounded-xl border border-[#1E2D4A] bg-[#0D1527] text-sm sm:text-base text-[#F1F5F9] placeholder-[#64748B] focus:border-[#8999FF] focus:outline-none focus:ring-1 focus:ring-[#8999FF] transition-all"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#94A3B8]"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#CBD5E1] transition-colors cursor-pointer"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Password Strength Checklist for Register */}
                 {!isLogin && (
-                  <div className="p-3.5 rounded-xl bg-[#0D1527] border border-[#1E2D4A] space-y-1.5 text-xs font-mono">
-                    <div className={`flex items-center gap-2 ${hasMinLength ? "text-[#10B981]" : "text-[#64748B]"}`}>
-                      <Check size={13} className={hasMinLength ? "text-[#10B981]" : "text-[#64748B]"} />
+                  <div className="p-3.5 rounded-xl bg-[#0D1527] border border-[#1E2D4A] space-y-1.5 text-xs text-[#94A3B8]">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasMinLength ? "bg-[#10B981] text-white" : "bg-[#1E2D4A] text-[#64748B]"}`}>
+                        ✓
+                      </div>
                       <span>At least 10 characters</span>
                     </div>
-                    <div className={`flex items-center gap-2 ${hasUpper ? "text-[#10B981]" : "text-[#64748B]"}`}>
-                      <Check size={13} className={hasUpper ? "text-[#10B981]" : "text-[#64748B]"} />
-                      <span>At least one uppercase letter (A-Z)</span>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasUpper ? "bg-[#10B981] text-white" : "bg-[#1E2D4A] text-[#64748B]"}`}>
+                        ✓
+                      </div>
+                      <span>At least one uppercase letter</span>
                     </div>
-                    <div className={`flex items-center gap-2 ${hasNumberOrSymbol ? "text-[#10B981]" : "text-[#64748B]"}`}>
-                      <Check size={13} className={hasNumberOrSymbol ? "text-[#10B981]" : "text-[#64748B]"} />
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasNumberOrSymbol ? "bg-[#10B981] text-white" : "bg-[#1E2D4A] text-[#64748B]"}`}>
+                        ✓
+                      </div>
                       <span>At least one number or symbol</span>
                     </div>
+                  </div>
+                )}
+
+                {isSessionExpired && !error && (
+                  <div role="status" className="p-3.5 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-xs text-[#FCD34D] leading-relaxed flex items-center gap-2">
+                    <ShieldAlert size={15} className="shrink-0 text-[#F59E0B]" />
+                    <span>Your session has expired. Please sign in again to continue.</span>
                   </div>
                 )}
 
@@ -423,14 +452,14 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
                   <span>
                     New to Smart Study?{" "}
                     <Link href="/register" className="text-[#8999FF] font-semibold hover:underline">
-                      Create account
+                      Create an account
                     </Link>
                   </span>
                 ) : (
                   <span>
                     Already registered?{" "}
                     <Link href="/login" className="text-[#8999FF] font-semibold hover:underline">
-                      Sign in here
+                      Sign in instead
                     </Link>
                   </span>
                 )}
@@ -440,44 +469,39 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         </div>
       </div>
 
-      {/* Subtle Footer Strip */}
-      <footer className="border-t border-[#1E2D4A]/50 py-3.5 px-6 sm:px-10 lg:px-12 xl:px-16 2xl:px-20 text-xs text-[#64748B] flex items-center justify-between w-full">
-        <span>&copy; 2026 Smart Study Portal. Source-Grounded Learning.</span>
-        <div className="flex items-center gap-4">
-          <span>Tenant Isolated</span>
-          <span>Local LLM Inference</span>
-        </div>
-      </footer>
-
       {/* Forgot Password Modal */}
       {forgotModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl bg-[#111B30] border border-[#1E2D4A] shadow-2xl relative space-y-4">
-            <button
-              onClick={() => setForgotModalOpen(false)}
-              className="absolute top-4 right-4 text-[#64748B] hover:text-white"
-            >
-              <X size={18} />
-            </button>
-            <h3 className="text-lg font-bold text-[#F1F5F9] font-heading">Reset Password</h3>
-            <p className="text-xs text-[#94A3B8] leading-relaxed">
-              Enter your account email address. We will verify your credentials and assist you with password recovery.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-[#111B30] border border-[#1E2D4A] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#F1F5F9]">Reset Password</h3>
+              <button
+                type="button"
+                onClick={() => setForgotModalOpen(false)}
+                className="text-[#64748B] hover:text-white"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs text-[#94A3B8]">
+              Enter your email address and we will generate instructions to reset your password.
             </p>
-            <form onSubmit={handleForgotPassword} className="space-y-3.5">
+            {forgotNotice && (
+              <div className="p-3 rounded-lg bg-[#10B981]/15 border border-[#10B981]/30 text-xs text-[#6EE7B7]">
+                {forgotNotice}
+              </div>
+            )}
+            <form onSubmit={handleForgotPassword} className="space-y-3">
               <input
                 type="email"
                 required
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
                 placeholder="student@example.com"
-                className="w-full h-11 px-4 rounded-xl border border-[#1E2D4A] bg-[#0D1527] text-sm text-[#F1F5F9] placeholder-[#64748B] focus:border-[#8999FF] focus:outline-none"
+                className="w-full h-11 px-3.5 rounded-xl border border-[#1E2D4A] bg-[#0D1527] text-sm text-[#F1F5F9] placeholder-[#64748B] focus:border-[#8999FF] focus:outline-none"
               />
-              {forgotNotice && (
-                <div className="p-3 rounded-lg bg-[#10B981]/15 border border-[#10B981]/30 text-xs text-[#10B981]">
-                  {forgotNotice}
-                </div>
-              )}
-              <div className="flex gap-2 justify-end pt-2">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setForgotModalOpen(false)}
@@ -487,7 +511,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-semibold bg-[#8999FF] text-[#080D1A] rounded-lg hover:bg-[#9CA8FF]"
+                  className="px-4 py-2 text-xs font-semibold bg-[#8999FF] text-[#080D1A] rounded-lg hover:bg-[#9CA8FF]"
                 >
                   Send Reset Link
                 </button>
@@ -496,6 +520,18 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           </div>
         </div>
       )}
+
+      {/* Footer (Minimal, Stretched Wide) */}
+      <footer className="border-t border-[#1E2D4A]/60 bg-[#080D1A] py-4 w-full">
+        <div className="w-full px-6 sm:px-10 lg:px-12 xl:px-16 2xl:px-20 flex flex-col sm:flex-row items-center justify-between text-xs text-[#64748B] gap-2">
+          <span>&copy; {new Date().getFullYear()} Smart Study Portal. Built for focused academic achievement.</span>
+          <div className="flex gap-4">
+            <Link href="/" className="hover:text-[#94A3B8] transition-colors">Documentation</Link>
+            <Link href="/" className="hover:text-[#94A3B8] transition-colors">Privacy</Link>
+            <Link href="/" className="hover:text-[#94A3B8] transition-colors">Terms</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

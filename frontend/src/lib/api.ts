@@ -8,15 +8,141 @@ export const API_BASE = (
 
 export const API = API_BASE;
 
-function getAuthHeaders(): Record<string, string> {
+export function getAuthToken(): string | null {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('study_token');
+    return localStorage.getItem('study_token');
+  }
+  return null;
+}
+
+export function setAuthToken(token: string | null): void {
+  if (typeof window !== 'undefined') {
     if (token) {
-      return { Authorization: `Bearer ${token}` };
+      localStorage.setItem('study_token', token);
+    } else {
+      localStorage.removeItem('study_token');
     }
+  }
+}
+
+export function getAuthHeaders(): Record<string, string> {
+  const token = getAuthToken();
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
   }
   return {};
 }
+
+let isRedirectingToLogin = false;
+
+export function redirectToLogin(reason: 'session_expired' | 'unauthorized' = 'session_expired'): void {
+  if (typeof window === 'undefined') return;
+  setAuthToken(null);
+
+  const currentPath = window.location.pathname;
+  if (currentPath === '/login' || currentPath === '/register' || currentPath === '/') {
+    return;
+  }
+
+  if (isRedirectingToLogin) return;
+  isRedirectingToLogin = true;
+
+  const currentSearch = window.location.search;
+  const redirectTarget = encodeURIComponent(currentPath + currentSearch);
+  window.location.href = `/login?redirect=${redirectTarget}&reason=${reason}`;
+}
+
+let refreshPromise: Promise<string | null> | null = null;
+
+async function attemptTokenRefresh(): Promise<string | null> {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+      });
+
+      if (!res.ok) {
+        return null;
+      }
+
+      const data = await res.json().catch(() => null);
+      if (data && data.token) {
+        setAuthToken(data.token);
+        return data.token as string;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+export interface FetchOptions extends RequestInit {
+  _retry?: boolean;
+  skipAuthRefresh?: boolean;
+}
+
+export async function fetchWithAuth(url: string, options: FetchOptions = {}): Promise<Response> {
+  const { _retry, skipAuthRefresh, headers: customHeaders, ...fetchInit } = options;
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const authHeaders = getAuthHeaders();
+
+  const headers: Record<string, string> = {
+    ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+    ...authHeaders,
+    ...(customHeaders as Record<string, string>),
+  };
+
+  const response = await fetch(url, {
+    ...fetchInit,
+    credentials: 'include',
+    headers,
+  });
+
+  const isAuthEndpoint =
+    url.includes('/auth/login') ||
+    url.includes('/auth/register') ||
+    url.includes('/auth/refresh');
+
+  if (response.status === 401 && !_retry && !skipAuthRefresh && !isAuthEndpoint) {
+    const newToken = await attemptTokenRefresh();
+    if (newToken) {
+      const retryHeaders: Record<string, string> = {
+        ...headers,
+        Authorization: `Bearer ${newToken}`,
+      };
+      return fetchWithAuth(url, {
+        ...options,
+        _retry: true,
+        headers: retryHeaders,
+      });
+    } else {
+      redirectToLogin('session_expired');
+    }
+  }
+
+  return response;
+}
+
+export const authFetch = fetchWithAuth;
 
 export class ApiError extends Error {
   constructor(
@@ -60,56 +186,46 @@ async function handleResponse<T>(response: Response, schema?: z.ZodSchema<T>): P
 }
 
 export const api = {
-  async get<T>(path: string, schema?: z.ZodSchema<T>, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE}${path}`, {
+  async get<T>(path: string, schema?: z.ZodSchema<T>, options?: FetchOptions): Promise<T> {
+    const response = await fetchWithAuth(`${API_BASE}${path}`, {
       ...options,
       method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
     });
     return handleResponse(response, schema);
   },
 
-  async post<T>(path: string, body?: unknown, schema?: z.ZodSchema<T>, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE}${path}`, {
+  async post<T>(path: string, body?: unknown, schema?: z.ZodSchema<T>, options?: FetchOptions): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+    const response = await fetchWithAuth(`${API_BASE}${path}`, {
       ...options,
       method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
     });
     return handleResponse(response, schema);
   },
 
-  async patch<T>(path: string, body?: unknown, schema?: z.ZodSchema<T>, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE}${path}`, {
+  async patch<T>(path: string, body?: unknown, schema?: z.ZodSchema<T>, options?: FetchOptions): Promise<T> {
+    const response = await fetchWithAuth(`${API_BASE}${path}`, {
       ...options,
       method: 'PATCH',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     return handleResponse(response, schema);
   },
 
-  async delete<T>(path: string, schema?: z.ZodSchema<T>, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE}${path}`, {
+  async put<T>(path: string, body?: unknown, schema?: z.ZodSchema<T>, options?: FetchOptions): Promise<T> {
+    const response = await fetchWithAuth(`${API_BASE}${path}`, {
+      ...options,
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    return handleResponse(response, schema);
+  },
+
+  async delete<T>(path: string, schema?: z.ZodSchema<T>, options?: FetchOptions): Promise<T> {
+    const response = await fetchWithAuth(`${API_BASE}${path}`, {
       ...options,
       method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
     });
     return handleResponse(response, schema);
   },
@@ -117,18 +233,16 @@ export const api = {
   async upload<T>(path: string, file: File, schema?: z.ZodSchema<T>): Promise<T> {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetchWithAuth(`${API_BASE}${path}`, {
       method: 'POST',
-      credentials: 'include',
       body: formData,
     });
     return handleResponse(response, schema);
   },
 
   async download(path: string): Promise<Blob> {
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetchWithAuth(`${API_BASE}${path}`, {
       method: 'GET',
-      credentials: 'include',
     });
     if (!response.ok) {
       throw new ApiError('Download failed', response.status);

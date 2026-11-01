@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -127,8 +127,8 @@ export default function ParentPage() {
   const loadData = useCallback(async () => {
     try {
       const [childrenRes, sentRes] = await Promise.all([
-        fetch(`${API}/parents/children`, { credentials: "include" }),
-        fetch(`${API}/parents/links/sent`, { credentials: "include" }),
+        fetch(`${API}/parents/children`, { credentials: "include", headers: getAuthHeaders() }),
+        fetch(`${API}/parents/links/sent`, { credentials: "include", headers: getAuthHeaders() }),
       ]);
 
       if (childrenRes.status === 401) {

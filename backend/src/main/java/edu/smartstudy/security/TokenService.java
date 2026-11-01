@@ -32,4 +32,17 @@ public class TokenService {
     public io.jsonwebtoken.Claims parse(String token) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
     }
+
+    public io.jsonwebtoken.Claims parseClaimsForRefresh(String token) {
+        try {
+            return parse(token);
+        } catch (io.jsonwebtoken.ExpiredJwtException eje) {
+            Date expiration = eje.getClaims().getExpiration();
+            // Allow refresh within a 7-day grace period after expiration
+            if (expiration != null && Instant.now().isBefore(expiration.toInstant().plus(java.time.Duration.ofDays(7)))) {
+                return eje.getClaims();
+            }
+            throw eje;
+        }
+    }
 }

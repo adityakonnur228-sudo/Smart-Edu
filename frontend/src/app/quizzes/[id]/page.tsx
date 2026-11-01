@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api";
+import { API, getAuthHeaders } from "@/lib/api";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -102,7 +102,7 @@ export default function QuizDetail() {
   const load = useCallback(async () => {
     if (!id) return;
     try {
-      const response = await fetch(`${API}/quizzes/${id}`, { credentials: "include" });
+      const response = await fetch(`${API}/quizzes/${id}`, { credentials: "include", headers: getAuthHeaders() });
       if (response.status === 401 || response.status === 403) {
         router.push("/login");
         return;
