@@ -1,0 +1,33 @@
+{
+  "subject_id": "java",
+  "subject_name": "Object Oriented Programming with Java",
+  "course_code": "BCS306A",
+  "scheme": "2022",
+  "semester": 3,
+  "classification": "Course Option",
+  "credits": 3,
+  "source_pdf": "3rd\u20134th semester syllabus.pdf",
+  "verification_status": "PARTIAL_VTU_CORE_M1_M2",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "DOWNLOADED_AND_SUPPLEMENTED",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "Java \u2013 BCS306A.pdf + Java_BCS306A_Modules_3_to_5_Learning_Guide.pdf",
+    "file_hash": "e356733fdf6fbc1b9ae9b8d3c2801d10228cc028ffa3dcd2a22769a97bbf2f23 + 2b1bcfeb7da04f8500762ff6283e35a1952a42e2f4ed9246516368a449af9aa5",
+    "page_count": 52,
+    "chunk_count": 68,
+    "indexing_timestamp": "2026-11-01T02:00:00+00:00",
+    "verification_status": "PARTIAL_VTU_CORE_M1_M2",
+    "module_coverage": "M1: Covered | M2: Covered | M3: Covered | M4: Covered | M5: Covered",
+    "coverage_percentage": "100.0%",
+    "missing_information": "None (Modules 1-2 covered in initial notes, Modules 3-5 covered in learning guide)",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "PARTIAL_RESOURCE",
+    "provenance": "ATME College of Engineering, Mysuru - Authentic VTU BCS306A notes covering Modules 1-2 only (48 pp), supplemented by Compiled Educational Guide for Modules 3-5 (4 pp)."
+  },
+  "resource_classification": "PARTIAL_RESOURCE",
+  "provenance_description": "ATME College of Engineering, Mysuru - Authentic VTU BCS306A notes covering Modules 1-2 only (48 pp), supplemented by Compiled Educational Guide for Modules 3-5 (4 pp)."
+}

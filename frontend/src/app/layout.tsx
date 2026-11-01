@@ -17,6 +17,21 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Smart Study Portal | Adaptive AI Learning Workspace",
   description: "A clean, source-grounded learning portal with intelligent note ingestion, adaptive study plans, active recall quizzes, and parent oversight.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "Smart Study Portal | Adaptive AI Learning Workspace",
+    description: "Source-grounded learning portal with local AI inference, verifiable citations, and active recall practice.",
+    type: "website",
+    siteName: "Smart Study Portal",
+  },
+  twitter: {
+    card: "summary",
+    title: "Smart Study Portal | Adaptive AI Learning Workspace",
+    description: "Source-grounded learning portal with local AI inference, verifiable citations, and active recall practice.",
+  },
 };
 
 export default function RootLayout({

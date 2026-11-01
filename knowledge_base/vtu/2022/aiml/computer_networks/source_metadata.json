@@ -1,0 +1,33 @@
+{
+  "subject_id": "computer_networks",
+  "subject_name": "Computer Networks",
+  "course_code": "BCS502",
+  "scheme": "2022",
+  "semester": 5,
+  "classification": "Core",
+  "credits": 4,
+  "source_pdf": "5th semester syllabus.pdf",
+  "verification_status": "COMPILED_EDUCATIONAL_GUIDE",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "COMPILED_EDUCATIONAL_GUIDE",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "Computer_Networks_BCS502_Learning_Guide.pdf (Supplemental to scanned note)",
+    "file_hash": "8e1f29cc0c5d59f0b5a460e34069427f782ccfbec531766641b6094591a7294c",
+    "page_count": 4,
+    "chunk_count": 4,
+    "indexing_timestamp": "2026-11-01T02:00:00+00:00",
+    "verification_status": "COMPILED_EDUCATIONAL_GUIDE",
+    "module_coverage": "M1: Covered | M2: Covered | M3: Covered | M4: Covered | M5: Covered",
+    "coverage_percentage": "100.0%",
+    "missing_information": "None (Modules 1-5 covered per Forouzan curriculum)",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "COMPILED_EDUCATIONAL_GUIDE",
+    "provenance": "Smart Edu Engineering Team - High-yield syllabus-aligned learning guide for VTU BCS502 (4 pp, 4 chunks); base 190 pp raster scan is unindexed."
+  },
+  "resource_classification": "COMPILED_EDUCATIONAL_GUIDE",
+  "provenance_description": "Smart Edu Engineering Team - High-yield syllabus-aligned learning guide for VTU BCS502 (4 pp, 4 chunks); base 190 pp raster scan is unindexed."
+}

@@ -62,7 +62,7 @@ public class AuthController {
     private ResponseEntity<?> session(User user) {
         String token = tokens.issue(user);
         var cookie = ResponseCookie.from("study_session", token)
-                .httpOnly(true).secure(cookieSecure).sameSite("Lax").path("/").maxAge(3600).build();
+                .httpOnly(true).secure(cookieSecure).sameSite(cookieSecure ? "None" : "Lax").path("/").maxAge(3600).build();
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("id", user.getId(), "name", user.getName(), "email", user.getEmail(),
                         "role", user.getRole(), "timezone", user.getTimezone(),
@@ -142,7 +142,7 @@ public class AuthController {
             users.save(u);
         }
         var cookie = ResponseCookie.from("study_session", "")
-                .httpOnly(true).secure(cookieSecure).path("/").maxAge(0).sameSite("Lax").build();
+                .httpOnly(true).secure(cookieSecure).path("/").maxAge(0).sameSite(cookieSecure ? "None" : "Lax").build();
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(Map.of("ok", true));
     }
 
@@ -198,7 +198,7 @@ public class AuthController {
         u.incrementTokenVersion(); // Invalidate all sessions
         users.save(u);
         var cookie = ResponseCookie.from("study_session", tokens.issue(u))
-                .httpOnly(true).secure(cookieSecure).sameSite("Lax").path("/").maxAge(3600).build();
+                .httpOnly(true).secure(cookieSecure).sameSite(cookieSecure ? "None" : "Lax").path("/").maxAge(3600).build();
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("message", "Password changed. You are now logged in with the new password."));
     }
@@ -244,7 +244,7 @@ public class AuthController {
         // Delete user (cascades to all owned data via FK)
         users.delete(u);
         var cookie = ResponseCookie.from("study_session", "")
-                .httpOnly(true).secure(cookieSecure).path("/").maxAge(0).sameSite("Lax").build();
+                .httpOnly(true).secure(cookieSecure).path("/").maxAge(0).sameSite(cookieSecure ? "None" : "Lax").build();
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("message", "Account deleted"));
     }

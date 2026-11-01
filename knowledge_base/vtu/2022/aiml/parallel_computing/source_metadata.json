@@ -1,0 +1,33 @@
+{
+  "subject_id": "parallel_computing",
+  "subject_name": "Parallel Computing",
+  "course_code": "BCI714B",
+  "scheme": "2022",
+  "semester": 7,
+  "classification": "Professional Elective",
+  "credits": 3,
+  "source_pdf": "7th-semester electives.pdf",
+  "verification_status": "SURROGATE_RESEARCH_SLIDES",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "DOWNLOADED",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "Parallel Computing \u2013 BCI714B.pdf",
+    "file_hash": "8d9c4ef0dd23351db469f1c37a9ec65674a77dfd9a1b8cd2fe997b35ec566f7f",
+    "page_count": 58,
+    "chunk_count": 18,
+    "indexing_timestamp": "2026-10-31T09:53:35.886887+00:00",
+    "verification_status": "SURROGATE_RESEARCH_SLIDES",
+    "module_coverage": "M1: Partially Covered | M2: Partially Covered | M3: Partially Covered | M4: Partially Covered | M5: Partially Covered",
+    "coverage_percentage": "50.0%",
+    "missing_information": "Routing mechanisms, OpenMP barrier/atomic constructs, MPI topologies, CUDA trapezoidal rule details",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "SUPPLEMENTARY_RESOURCE",
+    "provenance": "Dr. Plamen Krastev, Harvard University FAS Research Computing - 58-slide tutorial on parallel programming."
+  },
+  "resource_classification": "SUPPLEMENTARY_RESOURCE",
+  "provenance_description": "Dr. Plamen Krastev, Harvard University FAS Research Computing - 58-slide tutorial on parallel programming."
+}

@@ -1,6 +1,22 @@
 import { z } from 'zod';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
+export const API_BASE = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8080/api/v1'
+).replace(/\/+$/, '');
+
+export const API = API_BASE;
+
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('study_token');
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+  }
+  return {};
+}
 
 export class ApiError extends Error {
   constructor(
@@ -129,6 +145,7 @@ export const UserSchema = z.object({
   role: z.enum(['STUDENT', 'PARENT', 'ADMIN']),
   timezone: z.string().optional(),
   emailVerified: z.boolean().optional(),
+  token: z.string().optional(),
 });
 
 export const MaterialSchema = z.object({
@@ -143,7 +160,8 @@ export const MaterialSchema = z.object({
   topicsJson: z.string().nullable().optional(),
   keywordsJson: z.string().nullable().optional(),
   processingError: z.string().nullable().optional(),
-  createdAt: z.string(),
+  createdAt: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid ISO date string" }).nullable().optional(),
+  ready: z.boolean().optional(),
 });
 
 export const MaterialListSchema = z.object({
@@ -196,11 +214,25 @@ export const QuizSchema = z.object({
 export const QuizQuestionSchema = z.object({
   question: z.string(),
   options: z.array(z.string()),
-  correctAnswer: z.string(),
+  correctAnswer: z.string().optional(),
+  correct_answer: z.string().optional(),
   correctIndex: z.number().optional(),
+  correct_index: z.number().optional(),
   explanation: z.string(),
-  difficulty: z.string(),
-  sourceReference: z.string(),
+  difficulty: z.string().optional(),
+  sourceReference: z.string().optional(),
+  source_reference: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  source_url: z.string().optional(),
+  sourceTitle: z.string().optional(),
+  source_title: z.string().optional(),
+  publishedDate: z.string().nullable().optional(),
+  published_date: z.string().nullable().optional(),
+  sourceSnippet: z.string().optional(),
+  source_snippet: z.string().optional(),
+  provider: z.string().optional(),
+  retrievedAt: z.string().optional(),
+  retrieved_at: z.string().optional(),
 });
 
 export const QuizAttemptSchema = z.object({
@@ -215,12 +247,25 @@ export const QuizAttemptSchema = z.object({
 
 export const ProgressOverviewSchema = z.object({
   totalStudyMinutes: z.number(),
+  totalStudySeconds: z.number().optional(),
+  verifiedStudyMinutes: z.number().optional(),
+  verifiedStudySeconds: z.number().optional(),
+  isFocusingNow: z.boolean().optional(),
+  activeSessionSeconds: z.number().optional(),
+  activeSessionStatus: z.string().optional(),
+  activeSessionId: z.number().optional(),
   completedTasks: z.number(),
   totalTasks: z.number(),
+  pendingTasks: z.number().optional(),
   taskCompletionPercent: z.number(),
   quizAttempts: z.number(),
+  totalQuestionsAnswered: z.number().optional(),
+  totalCorrectAnswers: z.number().optional(),
   quizAccuracyPercent: z.number(),
+  activePracticeDays: z.number().optional(),
   streakDays: z.number().optional(),
+  serverTime: z.string().optional(),
+  timezone: z.string().optional(),
   weakTopics: z.array(z.object({
     topic: z.string(),
     accuracy: z.number(),
@@ -230,11 +275,51 @@ export const ProgressOverviewSchema = z.object({
 });
 
 export const ProgressTrendsSchema = z.object({
-  studyMinutes: z.array(z.object({ date: z.string(), minutes: z.number() })),
+  studyMinutes: z.array(z.object({
+    date: z.string(),
+    minutes: z.number(),
+    seconds: z.number().optional(),
+    verifiedSeconds: z.number().optional(),
+    liveSeconds: z.number().optional(),
+  })),
   taskCompletions: z.array(z.object({ date: z.string(), completed: z.number() })),
-  quizAccuracy: z.array(z.object({ date: z.string(), percent: z.number() })),
+  quizAccuracy: z.array(z.object({
+    date: z.string(),
+    percent: z.number().optional(),
+    questions: z.number().optional(),
+  })),
+  dailyBreakdown: z.array(z.object({
+    date: z.string(),
+    dayName: z.string().optional(),
+    focusMinutes: z.number(),
+    verifiedMinutes: z.number().optional(),
+    liveSeconds: z.number().optional(),
+    completedTasks: z.number(),
+    quizzesTaken: z.number(),
+    quizAccuracy: z.number().nullable().optional(),
+    hasActivity: z.boolean(),
+  })).optional(),
+  weekTotalSeconds: z.number().optional(),
+  weekTotalMinutes: z.number().optional(),
+  weekVerifiedSeconds: z.number().optional(),
+  serverTime: z.string().optional(),
   flashcardReviews: z.array(z.object({ date: z.string(), count: z.number() })).optional(),
 });
+
+export const TopicMasteryItemSchema = z.object({
+  topic: z.string(),
+  isAcademic: z.boolean(),
+  category: z.string(),
+  attempts: z.number(),
+  totalQuestions: z.number(),
+  totalCorrect: z.number(),
+  averageScore: z.number().nullable(),
+  status: z.string(),
+  statusLabel: z.string().optional(),
+  lastPracticed: z.string().nullable().optional(),
+});
+
+export const TopicMasteryListSchema = z.array(TopicMasteryItemSchema);
 
 export const TaskSchema = z.object({
   id: z.number(),
@@ -266,6 +351,18 @@ export const TutorConversationSchema = z.object({
   ownerId: z.number(),
   title: z.string(),
   createdAt: z.string(),
+});
+
+export const TutorConversationPageSchema = z.object({
+  content: z.array(TutorConversationSchema),
+  totalElements: z.number(),
+  totalPages: z.number(),
+  size: z.number(),
+  number: z.number(),
+  first: z.boolean(),
+  last: z.boolean(),
+  numberOfElements: z.number(),
+  empty: z.boolean(),
 });
 
 export const TutorMessageSchema = z.object({
@@ -308,6 +405,7 @@ export const TutorAskResponseSchema = z.object({
     role: z.string(),
     content: z.string(),
     sources: z.array(TutorSourceSchema).optional(),
+    attachments: z.array(z.record(z.any())).optional(),
     createdAt: z.string(),
   })),
   model: z.string().optional(),
@@ -329,6 +427,7 @@ export type ProgressTrends = z.infer<typeof ProgressTrendsSchema>;
 export type Task = z.infer<typeof TaskSchema>;
 export type FocusSession = z.infer<typeof FocusSessionSchema>;
 export type TutorConversation = z.infer<typeof TutorConversationSchema>;
+export type TutorConversationPage = z.infer<typeof TutorConversationPageSchema>;
 export type TutorMessage = z.infer<typeof TutorMessageSchema>;
 export type ParentLink = z.infer<typeof ParentLinkSchema>;
 export type TutorSource = z.infer<typeof TutorSourceSchema>;

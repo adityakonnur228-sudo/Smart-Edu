@@ -1,0 +1,33 @@
+{
+  "subject_id": "cryptography",
+  "subject_name": "Cryptography & Network Security",
+  "course_code": "BCS703",
+  "scheme": "2022",
+  "semester": 7,
+  "classification": "Core",
+  "credits": 4,
+  "source_pdf": "7th semester syllabus.pdf",
+  "verification_status": "COMPILED_EDUCATIONAL_GUIDE",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "COMPILED_EDUCATIONAL_GUIDE",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "Cryptography_and_Network_Security_BCS703_Learning_Guide.pdf",
+    "file_hash": "361152f7aa653e805b0741a56bd8c42f754054830df7f44c67fb91c4883dccbe",
+    "page_count": 7,
+    "chunk_count": 7,
+    "indexing_timestamp": "2026-11-01T02:00:00+00:00",
+    "verification_status": "COMPILED_EDUCATIONAL_GUIDE",
+    "module_coverage": "M1: Covered | M2: Covered | M3: Covered | M4: Covered | M5: Covered",
+    "coverage_percentage": "100.0%",
+    "missing_information": "None (Modules 1-5 covered per Stallings curriculum)",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "COMPILED_EDUCATIONAL_GUIDE",
+    "provenance": "Smart Edu Engineering Team - High-yield syllabus-aligned learning guide for VTU BCS703 per Stallings 7th Ed curriculum (7 pp, 7 chunks)."
+  },
+  "resource_classification": "COMPILED_EDUCATIONAL_GUIDE",
+  "provenance_description": "Smart Edu Engineering Team - High-yield syllabus-aligned learning guide for VTU BCS703 per Stallings 7th Ed curriculum (7 pp, 7 chunks)."
+}

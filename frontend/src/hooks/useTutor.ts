@@ -1,15 +1,15 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, TutorConversationSchema, TutorAskResponseSchema, type TutorConversation, type TutorAskResponse, type TutorSource } from '@/lib/api';
+import { api, TutorConversationSchema, TutorConversationPageSchema, TutorAskResponseSchema, type TutorConversation, type TutorConversationPage, type TutorAskResponse, type TutorSource } from '@/lib/api';
 import { z } from 'zod';
 
-export type { TutorAskResponse, TutorSource };
+export type { TutorAskResponse, TutorSource, TutorConversationPage };
 
-export function useTutorConversations() {
+export function useTutorConversations(page = 0, size = 20) {
   return useQuery({
-    queryKey: ['tutor', 'conversations'],
-    queryFn: () => api.get('/tutor/conversations', z.array(TutorConversationSchema)),
+    queryKey: ['tutor', 'conversations', page, size],
+    queryFn: () => api.get(`/tutor/conversations?page=${page}&size=${size}`, TutorConversationPageSchema),
   });
 }
 
@@ -37,10 +37,8 @@ export function useAskTutor() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { question: string; materialId?: number; conversationId?: number; grounded?: boolean; model?: string }) => {
-      const apiKey = typeof window !== 'undefined' ? (localStorage.getItem('ai_engine_key') || localStorage.getItem('smartstudy_openrouter_key') || '') : '';
+    mutationFn: (data: { question: string; materialId?: number; materialIds?: number[]; attachments?: any[]; conversationId?: number; grounded?: boolean; model?: string }) => {
       const headers: Record<string, string> = {};
-      if (apiKey) headers['X-LLM-Api-Key'] = apiKey;
       if (data.model) headers['X-LLM-Model'] = data.model;
       return api.post('/tutor/ask', data, TutorAskResponseSchema, { headers });
     },
@@ -57,10 +55,8 @@ export function useAskTutorGrounded() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { question: string; materialIds: number[]; conversationId?: number; model?: string }) => {
-      const apiKey = typeof window !== 'undefined' ? (localStorage.getItem('ai_engine_key') || localStorage.getItem('smartstudy_openrouter_key') || '') : '';
+    mutationFn: (data: { question: string; materialIds: number[]; attachments?: any[]; conversationId?: number; model?: string }) => {
       const headers: Record<string, string> = {};
-      if (apiKey) headers['X-LLM-Api-Key'] = apiKey;
       if (data.model) headers['X-LLM-Model'] = data.model;
       return api.post('/tutor/ask-grounded', data, TutorAskResponseSchema, { headers });
     },

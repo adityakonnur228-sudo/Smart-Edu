@@ -24,10 +24,14 @@ class OllamaConfig:
     connect_timeout: float = 15.0
     keep_alive: str = "24h"
     think: bool = False
+    api_key: Optional[str] = None
 
     @classmethod
     def from_env(cls) -> "OllamaConfig":
         think_env = os.getenv("OLLAMA_THINK", "false").strip().lower()
+        api_key = os.getenv("OLLAMA_API_KEY")
+        if api_key:
+            api_key = api_key.strip()
         return cls(
             base_url=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
             chat_model=os.getenv("OLLAMA_CHAT_MODEL", "smartstudy-tutor"),
@@ -37,6 +41,7 @@ class OllamaConfig:
             connect_timeout=float(os.getenv("OLLAMA_CONNECT_TIMEOUT", "15")),
             keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "24h"),
             think=think_env in ("true", "1", "yes"),
+            api_key=api_key,
         )
 
 
@@ -86,10 +91,13 @@ class OllamaClient:
                 write=self.config.timeout,
                 pool=self.config.timeout,
             )
+            headers = {"Content-Type": "application/json"}
+            if self.config.api_key:
+                headers["Authorization"] = f"Bearer {self.config.api_key}"
             self._client = httpx.AsyncClient(
                 base_url=self.config.base_url,
                 timeout=timeout,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
         return self._client
 

@@ -1,4 +1,127 @@
 package edu.smartstudy.planning;
-import com.fasterxml.jackson.core.type.TypeReference; import com.fasterxml.jackson.databind.ObjectMapper; import edu.smartstudy.material.*; import edu.smartstudy.user.UserRepository; import jakarta.validation.Valid; import jakarta.validation.constraints.*; import java.time.*; import java.util.*;
-import org.springframework.http.*; import org.springframework.security.core.Authentication; import org.springframework.web.bind.annotation.*;
-@RestController @RequestMapping("/api/v1/plans") public class StudyPlanController { private final StudyPlanRepository plans;private final StudyTaskRepository tasks;private final MaterialRepository materials;private final UserRepository users;private final ObjectMapper json;public StudyPlanController(StudyPlanRepository plans,StudyTaskRepository tasks,MaterialRepository materials,UserRepository users,ObjectMapper json){this.plans=plans;this.tasks=tasks;this.materials=materials;this.users=users;this.json=json;} private Long owner(Authentication a){return users.findByEmailIgnoreCase(a.getName()).orElseThrow().getId();} public record GenerateRequest(@Min(10) @Max(600) int availableMinutesPerDay,LocalDate startDate){} @GetMapping("/current") public ResponseEntity<?> current(Authentication a){Long id=owner(a);return plans.findFirstByStudentIdAndStatusOrderByCreatedAtDesc(id,"ACTIVE").<ResponseEntity<?>>map(p->ResponseEntity.ok(Map.of("plan",p,"tasks",tasks.findTop100ByStudentIdOrderByScheduledDateAscCreatedAtDesc(id)))).orElseGet(()->ResponseEntity.noContent().build());} @PostMapping("/generate") public ResponseEntity<?> generate(@RequestBody @Valid GenerateRequest input,Authentication a)throws Exception{Long student=owner(a);List<Map<String,Object>> concepts=new ArrayList<>();for(Material m:materials.findTop100ByOwnerIdOrderByCreatedAtDesc(student)){if(!"COMPLETED".equals(m.getStatus())||m.getTopicsJson()==null)continue;List<Map<String,Object>> rows=json.readValue(m.getTopicsJson(),new TypeReference<>(){});for(var row:rows){row.put("material",m.getTitle());concepts.add(row);}}if(concepts.isEmpty())return ResponseEntity.status(409).body(Map.of("error","Upload a processed document with extractable topics before generating a plan."));concepts.sort(Comparator.comparingDouble(x->-((Number)x.getOrDefault("importance",0.0)).doubleValue()));LocalDate start=input.startDate()==null?LocalDate.now():input.startDate();if(start.isBefore(LocalDate.now()))return ResponseEntity.badRequest().body(Map.of("error","Start date must be today or later."));plans.findFirstByStudentIdAndStatusOrderByCreatedAtDesc(student,"ACTIVE").ifPresent(old->{old.supersede();plans.save(old);});int daily=input.availableMinutesPerDay();LocalDate day=start;int used=0;StudyPlan plan=plans.save(new StudyPlan(student,start,start.plusDays(Math.max(1,(concepts.size()*25L+daily-1)/daily)),daily));List<StudyTask> created=new ArrayList<>();for(var c:concepts){String topic=Objects.toString(c.get("topic"),"Study topic");int minutes=Math.min(25,daily);if(used+minutes>daily){day=day.plusDays(1);used=0;}used+=minutes;double importance=((Number)c.getOrDefault("importance",0.0)).doubleValue();String priority=importance>=0.7?"HIGH":importance>=0.4?"MEDIUM":"LOW";created.add(tasks.save(new StudyTask(student,plan.getId(),"Review "+topic,Objects.toString(c.get("material"),"Study material"),day,minutes,priority)));}return ResponseEntity.status(201).body(Map.of("plan",plan,"tasks",created,"method","Topics ranked by their estimated importance; adjust this draft to fit your schedule."));} }
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.smartstudy.material.Material;
+import edu.smartstudy.material.MaterialRepository;
+import edu.smartstudy.user.UserRepository;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import java.time.LocalDate;
+import java.util.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/plans")
+public class StudyPlanController {
+    private final StudyPlanRepository plans;
+    private final StudyTaskRepository tasks;
+    private final MaterialRepository materials;
+    private final UserRepository users;
+    private final ObjectMapper json;
+
+    public StudyPlanController(StudyPlanRepository plans, StudyTaskRepository tasks,
+                               MaterialRepository materials, UserRepository users,
+                               ObjectMapper json) {
+        this.plans = plans;
+        this.tasks = tasks;
+        this.materials = materials;
+        this.users = users;
+        this.json = json;
+    }
+
+    private Long owner(Authentication a) {
+        return users.findByEmailIgnoreCase(a.getName()).orElseThrow().getId();
+    }
+
+    public record GenerateRequest(
+            @Min(10) @Max(600) int availableMinutesPerDay,
+            LocalDate startDate
+    ) {}
+
+    @GetMapping("/current")
+    public ResponseEntity<?> current(Authentication a) {
+        Long id = owner(a);
+        return plans.findFirstByStudentIdAndStatusOrderByCreatedAtDesc(id, "ACTIVE")
+                .<ResponseEntity<?>>map(p -> ResponseEntity.ok(Map.of(
+                        "plan", p,
+                        "tasks", tasks.findTop100ByStudentIdOrderByScheduledDateAscCreatedAtDesc(id)
+                )))
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<?> generate(@RequestBody @Valid GenerateRequest input, Authentication a) throws Exception {
+        Long student = owner(a);
+
+        LocalDate start = input.startDate() == null ? LocalDate.now() : input.startDate();
+        if (start.isBefore(LocalDate.now())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Start date must be today or later."));
+        }
+
+        List<Map<String, Object>> concepts = new ArrayList<>();
+        for (Material m : materials.findTop100ByOwnerIdOrderByCreatedAtDesc(student)) {
+            if (!"COMPLETED".equals(m.getStatus()) || m.getTopicsJson() == null || m.getTopicsJson().isBlank()) {
+                continue;
+            }
+            try {
+                JsonNode root = json.readTree(m.getTopicsJson());
+                if (root.isArray()) {
+                    for (JsonNode item : root) {
+                        Map<String, Object> concept = new HashMap<>();
+                        concept.put("material", m.getTitle());
+                        if (item.isObject()) {
+                            concept.put("topic", item.has("topic") ? item.get("topic").asText() : item.has("name") ? item.get("name").asText() : "Study Topic");
+                            concept.put("importance", item.has("importance") ? item.get("importance").asDouble() : 0.5);
+                        } else if (item.isTextual()) {
+                            concept.put("topic", item.asText());
+                            concept.put("importance", 0.5);
+                        }
+                        if (concept.containsKey("topic") && !concept.get("topic").toString().isBlank()) {
+                            concepts.add(concept);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (concepts.isEmpty()) {
+            return ResponseEntity.status(409).body(Map.of("error", "Upload a processed document with extractable topics before generating a plan."));
+        }
+
+        concepts.sort(Comparator.comparingDouble(x -> -((Number) x.getOrDefault("importance", 0.0)).doubleValue()));
+
+        plans.findFirstByStudentIdAndStatusOrderByCreatedAtDesc(student, "ACTIVE").ifPresent(old -> {
+            old.supersede();
+            plans.save(old);
+        });
+
+        int daily = input.availableMinutesPerDay();
+        LocalDate day = start;
+        int used = 0;
+        StudyPlan plan = plans.save(new StudyPlan(student, start, start.plusDays(Math.max(1, (concepts.size() * 25L + daily - 1) / daily)), daily));
+        List<StudyTask> created = new ArrayList<>();
+
+        for (var c : concepts) {
+            String topic = Objects.toString(c.get("topic"), "Study topic");
+            int minutes = Math.min(25, daily);
+            if (used + minutes > daily) {
+                day = day.plusDays(1);
+                used = 0;
+            }
+            used += minutes;
+            double importance = ((Number) c.getOrDefault("importance", 0.0)).doubleValue();
+            String priority = importance >= 0.7 ? "HIGH" : importance >= 0.4 ? "MEDIUM" : "LOW";
+            created.add(tasks.save(new StudyTask(student, plan.getId(), "Review " + topic, Objects.toString(c.get("material"), "Study material"), day, minutes, priority)));
+        }
+
+        return ResponseEntity.status(201).body(Map.of(
+                "plan", plan,
+                "tasks", created,
+                "method", "Topics ranked by their estimated importance; adjust this draft to fit your schedule."
+        ));
+    }
+}

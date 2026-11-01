@@ -1,0 +1,33 @@
+{
+  "subject_id": "generative_ai",
+  "subject_name": "Generative AI",
+  "course_code": "BAIL657C",
+  "scheme": "2022",
+  "semester": 6,
+  "classification": "Enhancement Course",
+  "credits": 1,
+  "source_pdf": "6th semester syllabus.pdf",
+  "verification_status": "SURROGATE_BOOK_CHAPTER",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "DOWNLOADED",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "Generative AI \u2013 BAIL657C.pdf",
+    "file_hash": "436dc511862823850d0c6f5869344e78df4c0890893d4ce11c8e8564635ba375",
+    "page_count": 22,
+    "chunk_count": 29,
+    "indexing_timestamp": "2026-10-31T09:53:35.886887+00:00",
+    "verification_status": "SURROGATE_BOOK_CHAPTER",
+    "module_coverage": "Foundations: Covered | Experiments 1-7: Partially Covered | Experiments 8-10: Missing",
+    "coverage_percentage": "64.6%",
+    "missing_information": "LangChain, Cohere API configuration, IPC RAG chatbot lab procedures",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "SUPPLEMENTARY_RESOURCE",
+    "provenance": "Wiley / Gartner Publishing - 22-page excerpt of Chapter 1 from commercial Generative AI book."
+  },
+  "resource_classification": "SUPPLEMENTARY_RESOURCE",
+  "provenance_description": "Wiley / Gartner Publishing - 22-page excerpt of Chapter 1 from commercial Generative AI book."
+}

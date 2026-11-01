@@ -29,8 +29,15 @@ public class StudyTaskController {
             @Size(max = 120) String subject,
             LocalDate scheduledDate,
             @Min(5) @Max(600) int estimatedMinutes,
-            @Pattern(regexp = "LOW|MEDIUM|HIGH") String priority
-    ) {}
+            @Pattern(regexp = "LOW|NORMAL|MEDIUM|HIGH") String priority
+    ) {
+        public String normalizedPriority() {
+            if (priority == null || "NORMAL".equalsIgnoreCase(priority)) {
+                return "MEDIUM";
+            }
+            return priority.toUpperCase();
+        }
+    }
 
     @GetMapping
     public List<StudyTask> list(Authentication a) {
@@ -46,7 +53,7 @@ public class StudyTaskController {
                 i.subject(),
                 i.scheduledDate(),
                 i.estimatedMinutes(),
-                i.priority() == null ? "MEDIUM" : i.priority()
+                i.normalizedPriority()
         )));
     }
 
@@ -58,7 +65,7 @@ public class StudyTaskController {
                     i.subject(),
                     i.scheduledDate(),
                     i.estimatedMinutes(),
-                    i.priority() == null ? "MEDIUM" : i.priority()
+                    i.normalizedPriority()
             );
             return ResponseEntity.ok(tasks.save(t));
         }).orElseGet(() -> ResponseEntity.notFound().build());

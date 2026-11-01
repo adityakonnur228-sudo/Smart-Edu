@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { useCallback, useEffect, useState, useMemo, type ChangeEvent } from "react";
 import Link from "next/link";
@@ -62,7 +63,7 @@ type Task = {
   priority?: string;
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
 
 export default function Dashboard() {
   const router = useRouter();
@@ -263,8 +264,8 @@ export default function Dashboard() {
           title={`Welcome back, ${userDisplayName}.`}
           description="Track your verified study time, active recall practice, and document library."
           actions={
-            <label className="button primary cursor-pointer">
-              <Upload size={15} />
+            <label className="button primary btn-default cursor-pointer inline-flex items-center justify-center gap-2">
+              <Upload size={16} className="shrink-0" />
               <span>{busy ? "Uploading Note..." : "Upload Note"}</span>
               <input
                 type="file"
@@ -376,22 +377,22 @@ export default function Dashboard() {
 
             <div className="flex items-center gap-2 pt-2 border-t border-brand-neutral/20">
               {nextTask ? (
-                <Button variant="primary" href="/focus" size="sm">
-                  <Clock size={14} className="mr-1" /> Launch Focus Block
+                <Button variant="primary" href="/focus" size="sm" icon={<Clock size={14} className="shrink-0" />}>
+                  Launch Focus Block
                 </Button>
               ) : materials.length > 0 ? (
-                <Button variant="primary" href="/quizzes" size="sm">
-                  <Award size={14} className="mr-1" /> Practice Recall Quiz
+                <Button variant="primary" href="/quizzes" size="sm" icon={<Award size={14} className="shrink-0" />}>
+                  Practice Recall Quiz
                 </Button>
               ) : (
-                <label className="button primary btn-compact cursor-pointer">
-                  <Upload size={14} />
+                <label className="button primary btn-sm cursor-pointer inline-flex items-center justify-center gap-1.5">
+                  <Upload size={14} className="shrink-0" />
                   <span>Upload File</span>
                   <input type="file" accept=".pdf,.txt,.docx" onChange={handleUpload} hidden />
                 </label>
               )}
-              <Button variant="ghost" href="/ai-tutor" size="sm">
-                <Brain size={14} className="mr-1" /> Open AI Tutor
+              <Button variant="ghost" href="/ai-tutor" size="sm" icon={<Brain size={14} className="shrink-0" />}>
+                Open AI Tutor
               </Button>
             </div>
           </div>
@@ -587,30 +588,29 @@ export default function Dashboard() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            href={`/ai-tutor`}
-                            className="text-xs"
+                            href="/ai-tutor"
+                            icon={<Brain size={13} className="text-ai-accent shrink-0" />}
                           >
-                            <Brain size={13} className="mr-1 text-brand-neutral" />
-                            <span>Ask Tutor</span>
+                            Ask Tutor
                           </Button>
                           <Button
                             variant="secondary"
                             size="sm"
-                            href={`/quizzes`}
-                            className="text-xs"
+                            href="/quizzes"
+                            icon={<Award size={13} className="text-amber-400 shrink-0" />}
                           >
-                            <Award size={13} className="mr-1 text-amber-400" />
-                            <span>Quiz</span>
+                            Quiz
                           </Button>
                         </>
                       )}
 
                       <button
                         onClick={() => setDeleteTarget(material)}
-                        className="p-1.5 rounded text-brand-muted hover:text-red-400 hover:bg-brand-secondary transition-colors cursor-pointer"
+                        className="btn-icon btn-icon-sm text-brand-muted hover:text-red-400 hover:bg-brand-secondary transition-colors cursor-pointer"
                         title="Delete material"
+                        aria-label="Delete material"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={14} className="shrink-0" />
                       </button>
                     </div>
                   </article>

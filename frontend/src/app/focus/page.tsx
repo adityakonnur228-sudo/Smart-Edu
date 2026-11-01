@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -51,7 +52,16 @@ const PRESET_DURATIONS: Record<TimerPreset, number> = {
   stopwatch: 0,
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
+
+function notifyMutation(type: string) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("smartstudy:mutation", { detail: { type } }));
+    try {
+      localStorage.setItem("smartstudy:last_mutation", `${type}:${Date.now()}`);
+    } catch {}
+  }
+}
 
 function formatClock(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600);
@@ -207,6 +217,7 @@ function FocusPageContent() {
       const created = (await res.json()) as Session;
       setSession(created);
       setSeconds(0);
+      notifyMutation("focus");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error starting timer.");
     } finally {
@@ -227,6 +238,7 @@ function FocusPageContent() {
       const updated = (await res.json()) as Session;
       setSession(updated);
       setSeconds(updated.durationSeconds);
+      notifyMutation("focus");
       if (updated.status === "COMPLETED") {
         setSession(null);
         setSeconds(0);
@@ -299,9 +311,8 @@ function FocusPageContent() {
           description="Settle into distraction-free momentum. Choose a preset interval to train your deep work capacity."
           actions={
             <Link href="/tasks">
-              <Button variant="ghost" size="sm">
-                <ListTodo size={14} className="mr-1.5" />
-                <span>Tasks ({pendingTasks.length})</span>
+              <Button variant="ghost" size="sm" icon={<ListTodo size={14} className="shrink-0" />}>
+                Tasks ({pendingTasks.length})
               </Button>
             </Link>
           }
@@ -335,10 +346,10 @@ function FocusPageContent() {
                         key={item.key}
                         type="button"
                         onClick={() => setPreset(item.key as TimerPreset)}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                        className={`inline-flex items-center justify-center px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap leading-none ${
                           active
-                            ? "bg-brand-secondary text-brand-light border border-brand-neutral/30 shadow-sm"
-                            : "text-brand-neutral hover:text-brand-neutral hover:bg-brand-primary border border-transparent"
+                            ? "bg-[#1A2A4B] text-[#7185FF] font-semibold border border-[#7185FF]/40 shadow-sm"
+                            : "text-[#C4CEE4] hover:text-[#F4F7FF] hover:bg-[#1A2A4B]/60 border border-transparent"
                         }`}
                       >
                         {item.label}
@@ -410,12 +421,13 @@ function FocusPageContent() {
               {!session || session.status === "COMPLETED" ? (
                 <Button
                   variant="primary"
-                  size="default"
+                  size="lg"
+                  icon={<Play size={16} fill="currentColor" className="shrink-0" />}
                   onClick={() => void handleStart()}
                   loading={busy}
-                  className="w-full text-sm font-medium py-2.5"
+                  className="w-full font-semibold shadow-[0_0_20px_rgba(113,133,255,0.4)]"
                 >
-                  <Play size={15} fill="currentColor" className="mr-1.5" /> Start Focus Session
+                  Start Focus Session
                 </Button>
               ) : (
                 <>
@@ -423,32 +435,35 @@ function FocusPageContent() {
                     <Button
                       variant="secondary"
                       size="default"
+                      icon={<Pause size={15} className="shrink-0" />}
                       onClick={() => void action(`/focus/sessions/${session.id}/pause`)}
                       loading={busy}
                       className="flex-1"
                     >
-                      <Pause size={15} className="mr-1.5" /> Pause
+                      Pause
                     </Button>
                   ) : (
                     <Button
                       variant="primary"
                       size="default"
+                      icon={<Play size={15} fill="currentColor" className="shrink-0" />}
                       onClick={() => void action(`/focus/sessions/${session.id}/resume`)}
                       loading={busy}
-                      className="flex-1"
+                      className="flex-1 font-semibold"
                     >
-                      <Play size={15} fill="currentColor" className="mr-1.5" /> Resume
+                      Resume
                     </Button>
                   )}
 
                   <Button
                     variant="ghost"
                     size="default"
+                    icon={<Square size={13} fill="currentColor" className="shrink-0" />}
                     onClick={() => void handleFinishRequest()}
                     loading={busy}
-                    className="flex-1 text-brand-neutral hover:text-brand-neutral"
+                    className="flex-1 text-text-secondary hover:text-white"
                   >
-                    <Square size={13} fill="currentColor" className="mr-1.5" /> Finish
+                    Finish
                   </Button>
                 </>
               )}

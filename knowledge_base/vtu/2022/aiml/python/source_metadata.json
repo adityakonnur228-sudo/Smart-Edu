@@ -1,0 +1,33 @@
+{
+  "subject_id": "python",
+  "subject_name": "Python Programming for Data Science",
+  "course_code": "BDS306B",
+  "scheme": "2022",
+  "semester": 3,
+  "classification": "Course Option",
+  "credits": 3,
+  "source_pdf": "3rd\u20134th semester syllabus.pdf",
+  "verification_status": "SURROGATE_OPEN_TEXTBOOK",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "DOWNLOADED",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "Python \u2013 BDS306B.pdf",
+    "file_hash": "b9a3f9e4246473a47c095eb20e516df639fa30ba8937657abd69fa132100d154",
+    "page_count": 143,
+    "chunk_count": 99,
+    "indexing_timestamp": "2026-10-31T09:53:35.886887+00:00",
+    "verification_status": "SURROGATE_OPEN_TEXTBOOK",
+    "module_coverage": "M1: Covered | M2: Covered | M3: Partially Covered | M4: Covered | M5: Partially Covered",
+    "coverage_percentage": "83.7%",
+    "missing_information": "Regular expressions (re module), Web Scraping (BeautifulSoup/Selenium), openpyxl Excel automation",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "VERIFIED_THIRD_PARTY_NOTES",
+    "provenance": "Prof. Hans-Petter Halvorsen, University of South-Eastern Norway - Open-access Python programming textbook."
+  },
+  "resource_classification": "VERIFIED_THIRD_PARTY_NOTES",
+  "provenance_description": "Prof. Hans-Petter Halvorsen, University of South-Eastern Norway - Open-access Python programming textbook."
+}

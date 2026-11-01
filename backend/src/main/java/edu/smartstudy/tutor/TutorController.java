@@ -9,7 +9,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.core.Authentication;
@@ -58,21 +61,42 @@ public class TutorController {
     public record AskRequest(
             @NotBlank @Size(max = 4000) String question,
             Long materialId,
+            List<Long> materialIds,
+            List<Map<String, Object>> attachments,
             Long conversationId,
             Boolean grounded,
-            String model
+            String model,
+            String subjectId,
+            String subjectCode,
+            Integer moduleNumber,
+            String mode,
+            Boolean generalKnowledge
     ) {}
 
     public record GroundedAskRequest(
             @NotBlank @Size(max = 4000) String question,
             List<Long> materialIds,
+            Long materialId,
+            List<Map<String, Object>> attachments,
             Long conversationId,
-            String model
+            String model,
+            String subjectId,
+            String subjectCode,
+            Integer moduleNumber,
+            String mode,
+            Boolean generalKnowledge
     ) {}
 
     @GetMapping("/conversations")
-    public List<TutorConversation> list(Authentication a) {
-        return conversations.findTop50ByOwnerIdOrderByCreatedAtDesc(owner(a));
+    public Page<TutorConversation> list(
+            Authentication a,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return conversations.findByOwnerIdOrderByCreatedAtDesc(
+            owner(a),
+            org.springframework.data.domain.PageRequest.of(page, Math.min(size, 50))
+        );
     }
 
     @GetMapping("/conversations/{id}")
@@ -112,280 +136,138 @@ public class TutorController {
 
     private Map<String, Object> messageView(TutorMessage m) {
         try {
-            return Map.of(
-                    "id", m.getId(),
-                    "role", m.getRole(),
-                    "content", m.getContent(),
-                    "sources", m.getSourcesJson() == null ? List.of() : json.readValue(m.getSourcesJson(), new TypeReference<List<Map<String, Object>>>() {}),
-                    "createdAt", m.getCreatedAt()
-            );
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", m.getId());
+            map.put("role", m.getRole());
+            map.put("content", m.getContent());
+            map.put("sources", m.getSourcesJson() == null ? List.of() : json.readValue(m.getSourcesJson(), new TypeReference<List<Map<String, Object>>>() {}));
+            map.put("attachments", m.getAttachmentsJson() == null ? List.of() : json.readValue(m.getAttachmentsJson(), new TypeReference<List<Map<String, Object>>>() {}));
+            map.put("createdAt", m.getCreatedAt());
+            return map;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
     }
 
-    @PostMapping({"/ask", "/chat"})
-    public ResponseEntity<?> ask(
-            @RequestBody @Valid AskRequest input,
-            @RequestHeader(value = "X-OpenRouter-Api-Key", required = false) String clientOpenRouterApiKey,
-            @RequestHeader(value = "X-LLM-Api-Key", required = false) String clientLlmApiKey,
-            @RequestHeader(value = "X-LLM-Model", required = false) String clientLlmModel,
-            Authentication a
-    ) throws Exception {
-        Long student = owner(a);
-
-        String clientApiKey = (clientOpenRouterApiKey != null && !clientOpenRouterApiKey.isBlank())
-                ? clientOpenRouterApiKey.trim()
-                : (clientLlmApiKey != null && !clientLlmApiKey.isBlank())
-                    ? clientLlmApiKey.trim()
-                    : (defaultOpenRouterApiKey != null && !defaultOpenRouterApiKey.isBlank())
-                        ? defaultOpenRouterApiKey.trim()
-                        : null;
-
-        String selectedModel = (input.model() != null && !input.model().isBlank())
-                ? input.model().trim()
-                : (clientLlmModel != null && !clientLlmModel.isBlank())
-                    ? clientLlmModel.trim()
-                    : "smartstudy-tutor";
-
-        String contextText = null;
-        String materialTitle = null;
-        boolean useGrounded = input.grounded() != null && input.grounded();
-        List<Long> targetMaterialIds = new ArrayList<>();
-
-        if (input.materialId() != null && input.materialId() > 0) {
-            Material material = materials.findByIdAndOwnerId(input.materialId(), student).orElse(null);
-            if (material == null) {
-                return ResponseEntity.notFound().build();
-            }
-            if ("PROCESSING".equals(material.getStatus())) {
-                for (int waitCount = 0; waitCount < 30; waitCount++) {
-                    try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-                    material = materials.findByIdAndOwnerId(input.materialId(), student).orElse(null);
-                    if (material != null && "COMPLETED".equals(material.getStatus()) && material.getExtractedText() != null) {
-                        break;
-                    }
-                }
-            }
-            if (!"COMPLETED".equals(material.getStatus()) || material.getExtractedText() == null) {
-                return ResponseEntity.status(409).body(Map.of("error", "The selected note is still processing. Please wait a few moments or choose a completed document."));
-            }
-            contextText = material.getExtractedText();
-            materialTitle = material.getTitle();
-            targetMaterialIds.add(material.getId());
-            useGrounded = true;
-        } else {
-            List<Material> studentMaterials = materials.findByOwnerIdAndStatusIn(student, List.of("COMPLETED"));
-            for (Material sm : studentMaterials) {
-                if (sm.getExtractedText() != null && !sm.getExtractedText().isBlank()) {
-                    targetMaterialIds.add(sm.getId());
-                }
-            }
-            if (!targetMaterialIds.isEmpty()) {
-                useGrounded = true;
+    private Set<Long> collectRequestedMaterialIds(Long singleId, List<Long> multiIds, List<Map<String, Object>> attachments) {
+        Set<Long> ids = new LinkedHashSet<>();
+        if (multiIds != null) {
+            for (Long id : multiIds) {
+                if (id != null && id > 0) ids.add(id);
             }
         }
+        if (singleId != null && singleId > 0) {
+            ids.add(singleId);
+        }
+        if (attachments != null) {
+            for (Map<String, Object> att : attachments) {
+                Object idObj = att.get("id");
+                if (idObj == null) idObj = att.get("materialId");
+                if (idObj instanceof Number num) {
+                    ids.add(num.longValue());
+                } else if (idObj instanceof String str && !str.isBlank()) {
+                    try {
+                        ids.add(Long.parseLong(str.trim()));
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        }
+        return ids;
+    }
 
+    private ResponseEntity<?> processTutorQuery(
+            Long student,
+            String question,
+            Long conversationId,
+            Set<Long> requestedMaterialIds,
+            List<Map<String, Object>> clientAttachments,
+            String subjectId,
+            String subjectCode,
+            Integer moduleNumber,
+            String mode,
+            Boolean generalKnowledge
+    ) throws Exception {
+        String selectedModel = "smartstudy-tutor";
+
+        // Resolve conversation first so we can check active materials
         TutorConversation conversation;
-        if (input.conversationId() == null) {
-            String title = input.question().trim();
+        if (conversationId == null) {
+            String title = question.trim();
             if (title.length() > 100) title = title.substring(0, 100) + "...";
             conversation = conversations.save(new TutorConversation(student, title));
         } else {
-            conversation = conversations.findByIdAndOwnerId(input.conversationId(), student).orElse(null);
+            conversation = conversations.findByIdAndOwnerId(conversationId, student).orElse(null);
             if (conversation == null) {
                 return ResponseEntity.notFound().build();
             }
         }
 
-        // Fetch recent conversation history turns
-        List<TutorMessage> prevMessages = messages.findByConversationIdOrderByCreatedAtAsc(conversation.getId());
-        List<Map<String, String>> historyList = new ArrayList<>();
-        for (TutorMessage pm : prevMessages) {
-            String role = "USER".equalsIgnoreCase(pm.getRole()) ? "user" : "assistant";
-            historyList.add(Map.of("role", role, "content", pm.getContent()));
-        }
-
-        // Save student question
-        messages.save(new TutorMessage(conversation.getId(), "USER", input.question().trim(), null));
-
-        Map<?, ?> chatResponse;
-        try {
-            if (useGrounded && !targetMaterialIds.isEmpty()) {
-                // Use RAG endpoint for grounded Q&A across student materials
-                Map<String, Object> ragPayload = new HashMap<>();
-                ragPayload.put("question", input.question().trim());
-                ragPayload.put("material_ids", targetMaterialIds);
-                ragPayload.put("conversation_history", historyList);
-                ragPayload.put("k", 8);
-                ragPayload.put("model", selectedModel);
-                if (contextText != null) {
-                    ragPayload.put("document_text", contextText);
-                    ragPayload.put("material_title", materialTitle);
-                }
-                if (clientApiKey != null) {
-                    ragPayload.put("api_key", clientApiKey);
-                }
-
-                var reqBuilder = ml.post().uri("/ml/v1/rag-query")
-                        .contentType(MediaType.APPLICATION_JSON);
-                if (clientApiKey != null) {
-                    reqBuilder.header("X-OpenRouter-Api-Key", clientApiKey);
-                    reqBuilder.header("X-LLM-Api-Key", clientApiKey);
-                }
-                chatResponse = reqBuilder.body(ragPayload).retrieve().body(Map.class);
-            } else {
-                // Use general chat endpoint
-                Map<String, Object> chatPayload = new HashMap<>();
-                chatPayload.put("question", input.question().trim());
-                chatPayload.put("messages", historyList);
-                chatPayload.put("model", selectedModel);
-                if (contextText != null) {
-                    chatPayload.put("context", contextText);
-                    chatPayload.put("material_title", materialTitle);
-                }
-                if (clientApiKey != null) {
-                    chatPayload.put("api_key", clientApiKey);
-                }
-
-                var reqBuilder = ml.post().uri("/ml/v1/chat")
-                        .contentType(MediaType.APPLICATION_JSON);
-                if (clientApiKey != null) {
-                    reqBuilder.header("X-OpenRouter-Api-Key", clientApiKey);
-                    reqBuilder.header("X-LLM-Api-Key", clientApiKey);
-                }
-                chatResponse = reqBuilder.body(chatPayload).retrieve().body(Map.class);
-            }
-        } catch (org.springframework.web.client.RestClientResponseException e) {
-            int statusCode = e.getStatusCode().value();
-            if (statusCode == 422) {
-                return ResponseEntity.status(422).body(Map.of("error", "Invalid question format: question cannot be empty.", "code", "VALIDATION_ERROR"));
-            } else if (statusCode == 400) {
-                return ResponseEntity.status(400).body(Map.of("error", "Model error: " + e.getResponseBodyAsString(), "code", "MODEL_ERROR"));
-            } else if (statusCode == 504) {
-                return ResponseEntity.status(504).body(Map.of("error", "The inference request timed out.", "code", "TIMEOUT_ERROR"));
-            }
-            return ResponseEntity.status(statusCode).body(Map.of("error", "AI service returned status " + statusCode, "code", "SERVICE_UNAVAILABLE"));
-        } catch (Exception e) {
-            // Fallback to semantic-search if chat endpoint is busy
-            try {
-                if (contextText != null) {
-                    Map<?, ?> found = ml.post().uri("/ml/v1/semantic-search")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .body(Map.of("question", input.question(), "context", contextText))
-                            .retrieve().body(Map.class);
-                    List<Map<String, Object>> hits = json.convertValue(found.get("matches"), new TypeReference<>() {});
-                    String passage = (hits != null && !hits.isEmpty()) ? Objects.toString(hits.get(0).get("text"), "") : "No passage found.";
-                    chatResponse = Map.of(
-                            "answer", "Here is what I found in your notes:\n\n> " + passage,
-                            "sources", hits != null ? hits : List.of(),
-                            "model", selectedModel
-                    );
-                } else {
-                    return ResponseEntity.status(503).body(Map.of("error", "The AI Tutor service is temporarily unavailable: " + e.getMessage(), "code", "SERVICE_UNAVAILABLE"));
-                }
-            } catch (Exception ex) {
-                return ResponseEntity.status(503).body(Map.of("error", "The AI Tutor service is temporarily unavailable.", "code", "SERVICE_UNAVAILABLE"));
-            }
-        }
-
-        String answerText = chatResponse != null && chatResponse.get("answer") != null
-                ? chatResponse.get("answer").toString()
-                : "No response generated.";
-
-        Object sourcesObj = chatResponse != null ? chatResponse.get("sources") : List.of();
-        String sourcesJson = sourcesObj != null ? json.writeValueAsString(sourcesObj) : "[]";
-
-        messages.save(new TutorMessage(conversation.getId(), "TUTOR", answerText, sourcesJson));
-
-        return ResponseEntity.ok(Map.of(
-                "conversationId", conversation.getId(),
-                "messages", messages.findByConversationIdOrderByCreatedAtAsc(conversation.getId()).stream().map(this::messageView).toList(),
-                "model", chatResponse != null && chatResponse.get("model") != null ? chatResponse.get("model").toString() : selectedModel,
-                "grounded", useGrounded
-        ));
-    }
-
-    @PostMapping("/ask-grounded")
-    public ResponseEntity<?> askGrounded(
-            @RequestBody @Valid GroundedAskRequest input,
-            @RequestHeader(value = "X-OpenRouter-Api-Key", required = false) String clientOpenRouterApiKey,
-            @RequestHeader(value = "X-LLM-Api-Key", required = false) String clientLlmApiKey,
-            @RequestHeader(value = "X-LLM-Model", required = false) String clientLlmModel,
-            Authentication a
-    ) throws Exception {
-        Long student = owner(a);
-
-        String clientApiKey = (clientOpenRouterApiKey != null && !clientOpenRouterApiKey.isBlank())
-                ? clientOpenRouterApiKey.trim()
-                : (clientLlmApiKey != null && !clientLlmApiKey.isBlank())
-                    ? clientLlmApiKey.trim()
-                    : (defaultOpenRouterApiKey != null && !defaultOpenRouterApiKey.isBlank())
-                        ? defaultOpenRouterApiKey.trim()
-                        : null;
-
-        String selectedModel = (input.model() != null && !input.model().isBlank())
-                ? input.model().trim()
-                : (clientLlmModel != null && !clientLlmModel.isBlank())
-                    ? clientLlmModel.trim()
-                    : "smartstudy-tutor";
-
-        // Validate material access
+        List<Material> validMaterials = new ArrayList<>();
         List<Long> validMaterialIds = new ArrayList<>();
         StringBuilder combinedDocText = new StringBuilder();
         String primaryTitle = null;
+        boolean isExplicitAttachmentQuery = !requestedMaterialIds.isEmpty();
 
-        if (input.materialIds() != null && !input.materialIds().isEmpty()) {
-            for (Long mid : input.materialIds()) {
+        if (isExplicitAttachmentQuery) {
+            for (Long mid : requestedMaterialIds) {
                 Material material = materials.findByIdAndOwnerId(mid, student).orElse(null);
-                if (material != null && "PROCESSING".equals(material.getStatus())) {
-                    for (int waitCount = 0; waitCount < 30; waitCount++) {
-                        try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-                        material = materials.findByIdAndOwnerId(mid, student).orElse(null);
-                        if (material != null && "COMPLETED".equals(material.getStatus()) && material.getExtractedText() != null) {
-                            break;
-                        }
-                    }
+                if (material == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Map.of("error", "Document not found or access denied (ID: " + mid + ")", "code", "NOT_FOUND"));
                 }
-                if (material != null && "COMPLETED".equals(material.getStatus()) && material.getExtractedText() != null) {
-                    validMaterialIds.add(mid);
+                String status = material.getStatus();
+                if ("PROCESSING".equals(status) || "INDEXING".equals(status) || "EXTRACTED".equals(status) || "QUEUED".equals(status)) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of(
+                                    "error", "The attached document '" + material.getTitle() + "' is currently being indexed. Please allow a few moments for vector processing to complete.",
+                                    "code", "DOCUMENT_PROCESSING",
+                                    "materialId", mid
+                            ));
+                }
+                if ("FAILED".equals(status)) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of(
+                                    "error", "The attached document '" + material.getTitle() + "' failed processing. Please re-upload or retry indexing.",
+                                    "code", "DOCUMENT_FAILED",
+                                    "materialId", mid
+                            ));
+                }
+                if (material.isReady()) {
+                    validMaterials.add(material);
+                    validMaterialIds.add(material.getId());
                     if (primaryTitle == null) primaryTitle = material.getTitle();
-                    if (combinedDocText.length() < 24000) {
+                    if (material.getExtractedText() != null && combinedDocText.length() < 24000) {
                         combinedDocText.append("\n--- ").append(material.getTitle()).append(" ---\n")
                                 .append(material.getExtractedText());
                     }
                 }
             }
-        }
-
-        if (validMaterialIds.isEmpty() && (input.materialIds() == null || input.materialIds().isEmpty())) {
-            List<Material> allCompleted = materials.findByOwnerIdAndStatusIn(student, List.of("COMPLETED"));
-            for (Material m : allCompleted) {
-                if (m.getExtractedText() != null && !m.getExtractedText().isBlank()) {
-                    validMaterialIds.add(m.getId());
-                    if (primaryTitle == null) primaryTitle = m.getTitle();
-                    if (combinedDocText.length() < 24000) {
-                        combinedDocText.append("\n--- ").append(m.getTitle()).append(" ---\n")
-                                .append(m.getExtractedText());
-                    }
+        } else {
+            // Check if conversation already has active material context
+            String activeIdsStr = conversation.getActiveMaterialIds();
+            if (activeIdsStr != null && !activeIdsStr.isBlank()) {
+                for (String part : activeIdsStr.split(",")) {
+                    try {
+                        Long mid = Long.parseLong(part.trim());
+                        Material material = materials.findByIdAndOwnerId(mid, student).orElse(null);
+                        if (material != null && material.isReady()) {
+                            validMaterials.add(material);
+                            validMaterialIds.add(material.getId());
+                            if (primaryTitle == null) primaryTitle = material.getTitle();
+                            if (material.getExtractedText() != null && combinedDocText.length() < 24000) {
+                                combinedDocText.append("\n--- ").append(material.getTitle()).append(" ---\n")
+                                        .append(material.getExtractedText());
+                            }
+                        }
+                    } catch (NumberFormatException ignored) {}
                 }
             }
         }
 
-        if (validMaterialIds.isEmpty()) {
-            return ResponseEntity.status(409).body(Map.of("error", "No valid completed documents selected for grounded Q&A."));
-        }
-
-        TutorConversation conversation;
-        if (input.conversationId() == null) {
-            String title = input.question().trim();
-            if (title.length() > 100) title = title.substring(0, 100) + "...";
-            conversation = conversations.save(new TutorConversation(student, title));
-        } else {
-            conversation = conversations.findByIdAndOwnerId(input.conversationId(), student).orElse(null);
-            if (conversation == null) {
-                return ResponseEntity.notFound().build();
-            }
+        // Update active materials on conversation
+        if (!validMaterialIds.isEmpty()) {
+            conversation.setActiveMaterialIds(validMaterialIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            conversations.save(conversation);
         }
 
         // Fetch recent conversation history turns
@@ -396,33 +278,57 @@ public class TutorController {
             historyList.add(Map.of("role", role, "content", pm.getContent()));
         }
 
-        // Save student question
-        messages.save(new TutorMessage(conversation.getId(), "USER", input.question().trim(), null));
+        // Prepare message attachments list
+        List<Map<String, Object>> messageAttachments = new ArrayList<>();
+        if (!validMaterials.isEmpty()) {
+            for (Material vm : validMaterials) {
+                double sizeMb = vm.getFileSize() / (1024.0 * 1024.0);
+                messageAttachments.add(Map.of(
+                        "id", vm.getId(),
+                        "name", vm.getTitle(),
+                        "size", sizeMb < 0.1 ? "< 0.1 MB" : String.format(Locale.US, "%.1f MB", sizeMb),
+                        "type", vm.getMimeType() != null ? vm.getMimeType() : "application/pdf",
+                        "status", vm.getStatus()
+                ));
+            }
+        }
+        String attachmentsJson = messageAttachments.isEmpty() ? null : json.writeValueAsString(messageAttachments);
 
-        // Call RAG endpoint
+        // Save student question with persisted attachments
+        messages.save(new TutorMessage(conversation.getId(), "USER", question.trim(), null, attachmentsJson));
+
+        // Call /ml/v1/rag-query
         Map<?, ?> chatResponse;
         try {
             Map<String, Object> ragPayload = new HashMap<>();
-            ragPayload.put("question", input.question().trim());
+            ragPayload.put("question", question.trim());
             ragPayload.put("material_ids", validMaterialIds);
+            ragPayload.put("is_attachment_query", !validMaterialIds.isEmpty());
             ragPayload.put("conversation_history", historyList);
             ragPayload.put("k", 8);
             ragPayload.put("model", selectedModel);
-            if (!combinedDocText.isEmpty()) {
+            if (subjectId != null) ragPayload.put("subject_id", subjectId);
+            if (subjectCode != null) ragPayload.put("subject_code", subjectCode);
+            if (moduleNumber != null) ragPayload.put("module_number", moduleNumber);
+            if (mode != null) ragPayload.put("mode", mode);
+            if (generalKnowledge != null) ragPayload.put("general_knowledge_mode", generalKnowledge);
+            if (combinedDocText.length() > 0) {
                 ragPayload.put("document_text", combinedDocText.toString());
                 ragPayload.put("material_title", primaryTitle);
             }
-            if (clientApiKey != null) {
-                ragPayload.put("api_key", clientApiKey);
-            }
 
-            var reqBuilder = ml.post().uri("/ml/v1/rag-query")
-                    .contentType(MediaType.APPLICATION_JSON);
-            if (clientApiKey != null) {
-                reqBuilder.header("X-OpenRouter-Api-Key", clientApiKey);
-                reqBuilder.header("X-LLM-Api-Key", clientApiKey);
+            ResponseEntity<String> responseEntity = ml.post().uri("/ml/v1/rag-query")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON, MediaType.ALL)
+                    .body(ragPayload)
+                    .retrieve()
+                    .toEntity(String.class);
+
+            String bodyStr = responseEntity.getBody();
+            if (bodyStr == null || bodyStr.isBlank()) {
+                return ResponseEntity.status(502).body(Map.of("error", "Empty response from AI Tutor service.", "code", "SERVICE_UNAVAILABLE"));
             }
-            chatResponse = reqBuilder.body(ragPayload).retrieve().body(Map.class);
+            chatResponse = json.readValue(bodyStr, Map.class);
         } catch (org.springframework.web.client.RestClientResponseException e) {
             int statusCode = e.getStatusCode().value();
             if (statusCode == 422) {
@@ -455,6 +361,56 @@ public class TutorController {
                 "model", chatResponse != null && chatResponse.get("model") != null ? chatResponse.get("model").toString() : selectedModel,
                 "grounded", grounded
         ));
+    }
+
+    @PostMapping({"/ask", "/chat"})
+    public ResponseEntity<?> ask(
+            @RequestBody @Valid AskRequest input,
+            @RequestHeader(value = "X-OpenRouter-Api-Key", required = false) String clientOpenRouterApiKey,
+            @RequestHeader(value = "X-LLM-Api-Key", required = false) String clientLlmApiKey,
+            @RequestHeader(value = "X-LLM-Model", required = false) String clientLlmModel,
+            Authentication a
+    ) throws Exception {
+        Long student = owner(a);
+        Set<Long> requestedMaterialIds = collectRequestedMaterialIds(input.materialId(), input.materialIds(), input.attachments());
+
+        return processTutorQuery(
+                student,
+                input.question(),
+                input.conversationId(),
+                requestedMaterialIds,
+                input.attachments(),
+                input.subjectId(),
+                input.subjectCode(),
+                input.moduleNumber(),
+                input.mode(),
+                input.generalKnowledge()
+        );
+    }
+
+    @PostMapping("/ask-grounded")
+    public ResponseEntity<?> askGrounded(
+            @RequestBody @Valid GroundedAskRequest input,
+            @RequestHeader(value = "X-OpenRouter-Api-Key", required = false) String clientOpenRouterApiKey,
+            @RequestHeader(value = "X-LLM-Api-Key", required = false) String clientLlmApiKey,
+            @RequestHeader(value = "X-LLM-Model", required = false) String clientLlmModel,
+            Authentication a
+    ) throws Exception {
+        Long student = owner(a);
+        Set<Long> requestedMaterialIds = collectRequestedMaterialIds(input.materialId(), input.materialIds(), input.attachments());
+
+        return processTutorQuery(
+                student,
+                input.question(),
+                input.conversationId(),
+                requestedMaterialIds,
+                input.attachments(),
+                input.subjectId(),
+                input.subjectCode(),
+                input.moduleNumber(),
+                input.mode(),
+                input.generalKnowledge()
+        );
     }
 
     @GetMapping("/health")

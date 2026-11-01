@@ -328,13 +328,14 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 /* ==========================================================================
    Buttons & Interactive Elements
    ========================================================================== */
-.button {
+.button, .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 6px 14px;
+  flex-direction: row;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -344,15 +345,47 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.01em;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  line-height: 1;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  text-decoration: none;
+}
+
+/* Ensure all nested SVGs in buttons and interactive controls remain inline-block with no wrapping */
+.button svg,
+.btn svg,
+button svg {
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle;
+}
+
+/* Ensure button content spans maintain inline-flex alignment */
+.button > span,
+.btn > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: inherit;
+  line-height: inherit;
   white-space: nowrap;
 }
 
-.button:hover:not(:disabled) {
+.button-icon-left,
+.button-icon-right {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.button:hover:not(:disabled), .btn:hover:not(:disabled) {
   opacity: 0.95;
 }
 
-.button:active:not(:disabled) {
+.button:active:not(:disabled), .btn:active:not(:disabled) {
   transform: scale(0.985);
 }
 
@@ -379,6 +412,19 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 .button.secondary:hover:not(:disabled), .button.quiet:hover:not(:disabled), .btn-secondary:hover:not(:disabled) {
+  border-color: var(--border-medium);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+/* Outline Button */
+.button.outline, .btn-outline {
+  border-color: var(--border-subtle);
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.button.outline:hover:not(:disabled), .btn-outline:hover:not(:disabled) {
   border-color: var(--border-medium);
   background: var(--surface-elevated);
   color: var(--text-primary);
@@ -423,25 +469,47 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   color: #A5F3FC;
 }
 
-.button:disabled {
+.button:disabled, .btn:disabled {
   cursor: not-allowed;
   opacity: 0.4;
   transform: none !important;
 }
 
-.btn-compact {
-  min-height: 30px;
-  padding: 4px 10px;
+/* Size Variants */
+.button.btn-sm, .button.btn-compact, .btn-sm, .btn-compact {
+  min-height: 34px;
+  height: 34px;
+  padding: 4px 12px;
   font-size: 12px;
+  gap: 6px;
   border-radius: var(--radius-sm);
 }
 
-.btn-icon {
+.button.btn-default, .btn-default {
+  min-height: 40px;
+  height: 40px;
+  padding: 8px 16px;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.button.btn-lg, .btn-lg {
+  min-height: 48px;
+  height: 48px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 10px;
+}
+
+.button.btn-icon, .btn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   padding: 0;
   border-radius: var(--radius-sm);
   background: var(--card-bg);
@@ -449,12 +517,20 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-.btn-icon:hover {
+.button.btn-icon:hover, .btn-icon:hover {
   background: var(--surface-elevated);
   border-color: var(--border-medium);
   color: var(--text-primary);
+}
+
+.button.btn-icon-sm, .btn-icon-sm {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
 }
 
 /* ==========================================================================

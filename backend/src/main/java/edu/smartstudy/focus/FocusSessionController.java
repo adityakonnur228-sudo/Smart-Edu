@@ -63,7 +63,7 @@ public class FocusSessionController {
         return update(id, a, FocusSession::resume);
     }
 
-    @PostMapping({"/{id}/finish", "/{id}/stop", "/{id}/end"})
+    @PostMapping({"/{id}/finish", "/{id}/stop", "/{id}/end", "/{id}/complete"})
     public ResponseEntity<?> finish(@PathVariable Long id, Authentication a) {
         return update(id, a, FocusSession::finish);
     }

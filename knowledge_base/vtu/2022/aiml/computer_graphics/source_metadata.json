@@ -1,0 +1,33 @@
+{
+  "subject_id": "computer_graphics",
+  "subject_name": "Computer Graphics",
+  "course_code": "UNVERIFIED_CG",
+  "scheme": "2022",
+  "semester": null,
+  "classification": "Supplementary",
+  "credits": null,
+  "source_pdf": "N/A",
+  "verification_status": "INVALID_RESOURCE",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "NOT_APPLICABLE",
+    "notes_indexing_status": "NOT_INDEXED",
+    "final_filename": "None",
+    "file_hash": "N/A",
+    "page_count": 0,
+    "chunk_count": 0,
+    "indexing_timestamp": null,
+    "verification_status": "INVALID_RESOURCE",
+    "module_coverage": "N/A (Supplementary Subject)",
+    "coverage_percentage": "0.0%",
+    "missing_information": "All modules missing (No file placed in folder)",
+    "embedding_model": null,
+    "embedding_dimension": null,
+    "vector_store": null,
+    "chroma_collection": null,
+    "resource_classification": "INVALID_RESOURCE",
+    "provenance": "Subject not present in official VTU 2022 AIML Scheme. 0 materials ingested."
+  },
+  "resource_classification": "INVALID_RESOURCE",
+  "provenance_description": "Subject not present in official VTU 2022 AIML Scheme. 0 materials ingested."
+}

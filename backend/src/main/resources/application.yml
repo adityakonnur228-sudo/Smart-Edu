@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/smart_study?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
@@ -34,6 +35,17 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+
 app:
   ml-url: ${ML_SERVICE_URL:http://localhost:8000}
   upload-dir: ${UPLOAD_DIR:./uploads}
@@ -45,11 +57,17 @@ app:
   bootstrap-admin-email: ${BOOTSTRAP_ADMIN_EMAIL:}
   bootstrap-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
   storage-backend: ${STORAGE_BACKEND:local}
+  s3:
+    endpoint: ${S3_ENDPOINT:}
+    region: ${S3_REGION:us-east-1}
+    bucket: ${S3_BUCKET:smart-study-documents}
+    access-key: ${S3_ACCESS_KEY:}
+    secret-key: ${S3_SECRET_KEY:}
   max-upload-mb: ${MAX_UPLOAD_MB:20}
   user-storage-quota-mb: ${USER_STORAGE_QUOTA_MB:500}
   dev-seed-enabled: ${DEV_SEED_ENABLED:false}
-  openrouter-api-key: ${OPENROUTER_API_KEY:${LLM_API_KEY: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}}
-  # Local Ollama AI Configuration
+  openrouter-api-key: ${OPENROUTER_API_KEY:${LLM_API_KEY:}}
+  # Local / Remote Ollama AI Configuration
   ollama-base-url: ${OLLAMA_BASE_URL:http://127.0.0.1:11434}
   ollama-chat-model: ${OLLAMA_CHAT_MODEL:smartstudy-tutor}
   ollama-embed-model: ${OLLAMA_EMBED_MODEL:nomic-embed-text}

@@ -1,5 +1,7 @@
 package edu.smartstudy.material;
 
+import edu.smartstudy.storage.StorageService;
+
 import java.nio.file.Path;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,18 +27,22 @@ public class MaterialProcessor {
     private final ObjectMapper json;
     private final Path uploadDir;
     private final String mlInternalToken;
+    private final StorageService storageService;
 
     public MaterialProcessor(MaterialRepository materials, MaterialChunkRepository chunkRepo,
                              @Value("${app.ml-url}") String mlUrl,
                              @Value("${app.ml-internal-token}") String mlInternalToken,
                              @Value("${app.upload-dir}") String dir,
+                             StorageService storageService,
                              ObjectMapper json) {
+        this.storageService = storageService;
         this.materials = materials;
         this.chunkRepo = chunkRepo;
         HttpClient httpClient = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(300));
         this.ml = WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
                 .baseUrl(mlUrl)
                 .defaultHeader("X-Internal-Token", mlInternalToken)
                 .build();
@@ -47,23 +53,40 @@ public class MaterialProcessor {
 
     @EventListener(ApplicationReadyEvent.class)
     public void resumeProcessingAfterRestart() {
-        materials.findByStatus("PROCESSING").forEach(m ->
-                java.util.concurrent.CompletableFuture.runAsync(() -> processNow(m.getId(), uploadDir.resolve(m.storageKey())))
+        materials.findByStatusIn(java.util.List.of("QUEUED", "PROCESSING", "EXTRACTED", "CHUNKING", "INDEXING")).forEach(m ->
+                java.util.concurrent.CompletableFuture.runAsync(() -> processNow(m.getId()))
         );
     }
 
-    public void process(Long id, Path file) {
-        java.util.concurrent.CompletableFuture.runAsync(() -> processNow(id, file));
+    public void process(Long id) {
+        java.util.concurrent.CompletableFuture.runAsync(() -> processNow(id));
     }
 
-    private void processNow(Long id, Path file) {
+    public void process(Long id, Path file) {
+        process(id);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void retry(Long id) {
+        Material material = materials.findById(id).orElse(null);
+        if (material == null) return;
+        deleteVectorIndex(id);
+        chunkRepo.deleteByMaterialId(id);
+        material.processing();
+        materials.save(material);
+        java.util.concurrent.CompletableFuture.runAsync(() -> processNow(id));
+    }
+
+    private void processNow(Long id) {
         Material material = materials.findById(id).orElse(null);
         if (material == null) return;
         try {
+            material.processing();
+            materials.save(material);
             String fileName = material.getFileName();
-            byte[] fileBytes = java.nio.file.Files.readAllBytes(file);
+            byte[] fileBytes = storageService.loadAsBytes(material.storageKey());
 
-            System.err.println("[MaterialProcessor] Uploading file: " + fileName + " from path: " + file);
+            System.err.println("[MaterialProcessor] Uploading file: " + fileName + " for key: " + material.storageKey());
             System.err.println("[MaterialProcessor] File size: " + fileBytes.length);
 
             // Extract text and chunks using WebClient
@@ -100,43 +123,58 @@ public class MaterialProcessor {
                 persistChunks(id, chunks);
             }
 
+            material.extracted(text);
+            materials.save(material);
+
             // Index chunks in ChromaDB vector store for semantic search
             if (chunks != null && !chunks.isEmpty()) {
-                indexChunksInVectorStore(id, chunks, fileType, fileName);
+                material.indexing(text);
+                materials.save(material);
+                indexChunksInVectorStore(id, chunks, fileType, fileName, material.getOwnerId());
+                material.indexed(text);
+                materials.save(material);
+                System.err.println("[MaterialProcessor] Material " + id + " indexed in ChromaDB (status: INDEXED, chunks: " + chunks.size() + ")");
+            } else {
+                material.indexed(text);
+                materials.save(material);
             }
 
-            // Summarize
-            Map<?, ?> summary = ml.post()
-                    .uri("/ml/v1/summarize")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of("text", text, "material_id", id, "style", "detailed"))
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
+            // Summarize, Topics, Keywords (Enrichment - non-blocking for retrieval readiness)
+            try {
+                Map<?, ?> summary = ml.post()
+                        .uri("/ml/v1/summarize")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("text", text, "material_id", id, "style", "detailed"))
+                        .retrieve()
+                        .bodyToMono(Map.class)
+                        .block();
 
-            // Topics
-            Map<?, ?> topics = ml.post()
-                    .uri("/ml/v1/topics")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of("text", text))
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
+                Map<?, ?> topics = ml.post()
+                        .uri("/ml/v1/topics")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("text", text))
+                        .retrieve()
+                        .bodyToMono(Map.class)
+                        .block();
 
-            // Keywords
-            Map<?, ?> keywords = ml.post()
-                    .uri("/ml/v1/keywords")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of("text", text))
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
+                Map<?, ?> keywords = ml.post()
+                        .uri("/ml/v1/keywords")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("text", text))
+                        .retrieve()
+                        .bodyToMono(Map.class)
+                        .block();
 
-            material.complete(text,
-                    Objects.toString(summary.get("summary"), ""),
-                    json.writeValueAsString(topics.get("topics")),
-                    json.writeValueAsString(keywords.get("keywords")));
-            materials.save(material);
+                material.complete(text,
+                        summary != null ? Objects.toString(summary.get("summary"), "") : "",
+                        topics != null ? json.writeValueAsString(topics.get("topics")) : "[]",
+                        keywords != null ? json.writeValueAsString(keywords.get("keywords")) : "[]");
+                materials.save(material);
+            } catch (Exception enrichErr) {
+                System.err.println("[MaterialProcessor] Note enrichment warning for material " + id + ": " + enrichErr.getMessage());
+                material.indexed(text);
+                materials.save(material);
+            }
 
             System.err.println("[MaterialProcessor] Successfully processed material " + id);
         } catch (Exception e) {
@@ -160,17 +198,22 @@ public class MaterialProcessor {
         }
     }
 
-    private void indexChunksInVectorStore(Long materialId, List<Map<String, Object>> chunks, String fileType, String fileName) {
+    private void indexChunksInVectorStore(Long materialId, List<Map<String, Object>> chunks, String fileType, String fileName, Long ownerId) {
         try {
+            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+            payload.put("material_id", materialId);
+            payload.put("chunks", chunks);
+            payload.put("file_type", fileType);
+            payload.put("filename", fileName);
+            if (ownerId != null && ownerId > 0) {
+                payload.put("student_id", ownerId);
+            }
+            payload.put("scope", "private");
+
             Map<?, ?> result = ml.post()
                     .uri("/ml/v1/index-material")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of(
-                            "material_id", materialId,
-                            "chunks", chunks,
-                            "file_type", fileType,
-                            "filename", fileName
-                    ))
+                    .bodyValue(payload)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
@@ -183,7 +226,8 @@ public class MaterialProcessor {
         }
     }
 
-    private void persistChunks(Long materialId, List<Map<String, Object>> chunks) {
+    @org.springframework.transaction.annotation.Transactional
+    public void persistChunks(Long materialId, List<Map<String, Object>> chunks) {
         // Delete existing chunks for this material
         chunkRepo.deleteByMaterialId(materialId);
 

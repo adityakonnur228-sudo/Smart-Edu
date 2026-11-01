@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -97,7 +98,7 @@ type Report = {
   materialsStudied?: MaterialRecord[];
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
 
 function formatDuration(mins: number): string {
   if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"}`;
@@ -259,7 +260,7 @@ export default function ParentPage() {
               size="sm"
               onClick={() => void handleRefresh()}
               loading={refreshing}
-              icon={<RefreshCw size={13} />}
+              icon={<RefreshCw size={13} className="shrink-0" />}
               className="text-xs"
             >
               Refresh
@@ -302,7 +303,7 @@ export default function ParentPage() {
                   className="w-56 sm:w-64 bg-brand-raised border border-brand-neutral/25 rounded-lg pl-8 pr-3 py-1.5 text-xs text-brand-light placeholder:text-brand-muted focus:outline-none focus:border-brand-neutral/40"
                 />
               </div>
-              <Button type="submit" variant="primary" size="sm" loading={busy} icon={<Send size={12} />} className="text-xs py-1.5 px-3">
+              <Button type="submit" variant="primary" size="sm" loading={busy} icon={<Send size={12} className="shrink-0" />} className="text-xs py-1.5 px-3">
                 Send
               </Button>
             </form>
@@ -372,7 +373,7 @@ export default function ParentPage() {
                           : "bg-brand-raised border-brand-neutral/20 text-brand-neutral hover:text-brand-neutral"
                       }`}
                     >
-                      <Users size={12} />
+                      <Users size={12} className="shrink-0" />
                       {c.name}
                     </button>
                   );
@@ -488,7 +489,7 @@ export default function ParentPage() {
                             : "border-transparent text-brand-muted hover:text-brand-neutral"
                         }`}
                       >
-                        <Icon size={13} />
+                        <Icon size={13} className="shrink-0" />
                         {tab.label}
                       </button>
                     );

@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -131,7 +132,7 @@ type AuditEntry = {
   details: string;
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
 
 function formatDuration(mins: number): string {
   if (mins < 60) return `${mins} mins`;
@@ -398,7 +399,7 @@ export default function AdminPage() {
               size="sm"
               onClick={() => void handleRefresh()}
               loading={refreshing}
-              icon={<RefreshCw size={13} />}
+              icon={<RefreshCw size={13} className="shrink-0" />}
               className="text-xs"
             >
               Refresh
@@ -418,7 +419,7 @@ export default function AdminPage() {
                 variant="primary"
                 size="sm"
                 onClick={() => void handleSwitchToAdmin()}
-                icon={<ShieldCheck size={13} />}
+                icon={<ShieldCheck size={13} className="shrink-0" />}
                 className="text-xs py-1 px-3"
               >
                 Sign In as Admin (admin@test.com)
@@ -559,7 +560,7 @@ export default function AdminPage() {
                         : "border-transparent text-brand-muted hover:text-brand-neutral"
                     }`}
                   >
-                    <Icon size={13} />
+                    <Icon size={13} className="shrink-0" />
                     {tab.label}
                   </button>
                 );

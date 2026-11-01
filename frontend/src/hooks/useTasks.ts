@@ -1,5 +1,6 @@
 'use client';
 
+import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, TaskSchema, type Task } from '@/lib/api';
 
@@ -46,6 +47,9 @@ export function useCreateTask() {
       api.post('/tasks', data, TaskSchema),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('smartstudy:mutation', { detail: { type: 'tasks' } }));
     },
   });
 }
@@ -59,6 +63,9 @@ export function useUpdateTask() {
     onSuccess: (updated, { id }) => {
       queryClient.setQueryData(['task', id], updated);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('smartstudy:mutation', { detail: { type: 'tasks' } }));
     },
   });
 }
@@ -71,6 +78,9 @@ export function useCompleteTask() {
     onSuccess: (updated, id) => {
       queryClient.setQueryData(['task', id], updated);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('smartstudy:mutation', { detail: { type: 'tasks' } }));
     },
   });
 }
@@ -83,6 +93,9 @@ export function useReopenTask() {
     onSuccess: (updated, id) => {
       queryClient.setQueryData(['task', id], updated);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('smartstudy:mutation', { detail: { type: 'tasks' } }));
     },
   });
 }
@@ -95,8 +108,9 @@ export function useDeleteTask() {
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: ['task', id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('smartstudy:mutation', { detail: { type: 'tasks' } }));
     },
   });
 }
-
-import { z } from 'zod';

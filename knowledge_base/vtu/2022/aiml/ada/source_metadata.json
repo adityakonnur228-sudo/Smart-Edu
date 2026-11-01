@@ -1,0 +1,33 @@
+{
+  "subject_id": "ada",
+  "subject_name": "Analysis & Design of Algorithms",
+  "course_code": "BCS401",
+  "scheme": "2022",
+  "semester": 4,
+  "classification": "Core",
+  "credits": 3,
+  "source_pdf": "3rd\u20134th semester syllabus.pdf",
+  "verification_status": "VERIFIED_OFFICIAL_CORE",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "DOWNLOADED",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "ADA \u2013 BCS401.pdf",
+    "file_hash": "30847f3532a158dc82dabee57c09897e41d88508eb1a73a7c7c601d8e9dd2749",
+    "page_count": 152,
+    "chunk_count": 119,
+    "indexing_timestamp": "2026-10-31T09:53:35.886887+00:00",
+    "verification_status": "VERIFIED_OFFICIAL_CORE",
+    "module_coverage": "M1: Covered | M2: Covered | M3: Covered | M4: Covered | M5: Covered",
+    "coverage_percentage": "98.5%",
+    "missing_information": "Minor elective variants only",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "OFFICIAL_VTU_NOTES",
+    "provenance": "VTUADDA / Engineering College CSE Dept - Authentic VTU BCS401 lecture notes covering all 5 modules."
+  },
+  "resource_classification": "OFFICIAL_VTU_NOTES",
+  "provenance_description": "VTUADDA / Engineering College CSE Dept - Authentic VTU BCS401 lecture notes covering all 5 modules."
+}

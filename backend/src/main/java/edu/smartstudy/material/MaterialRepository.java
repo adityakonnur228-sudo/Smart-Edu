@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface MaterialRepository extends JpaRepository<Material, Long> {
     List<Material> findTop100ByOwnerIdOrderByCreatedAtDesc(Long ownerId);
     List<Material> findByStatus(String status);
+    List<Material> findByStatusIn(List<String> statuses);
     long countByStatus(String status);
     Optional<Material> findByIdAndOwnerId(Long id, Long ownerId);
 

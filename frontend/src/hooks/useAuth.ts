@@ -21,6 +21,9 @@ export function useLogin() {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       api.post('/auth/login', { email, password }, UserSchema),
     onSuccess: (user) => {
+      if (user.token && typeof window !== 'undefined') {
+        localStorage.setItem('study_token', user.token);
+      }
       queryClient.setQueryData(['me'], user);
       if (user.role === 'STUDENT') router.push('/dashboard');
       else if (user.role === 'PARENT') router.push('/parent');
@@ -38,6 +41,9 @@ export function useRegister() {
     mutationFn: (data: { name: string; email: string; password: string; role: 'STUDENT' | 'PARENT' }) =>
       api.post('/auth/register', data, UserSchema),
     onSuccess: (user) => {
+      if (user.token && typeof window !== 'undefined') {
+        localStorage.setItem('study_token', user.token);
+      }
       queryClient.setQueryData(['me'], user);
       if (user.role === 'STUDENT') router.push('/dashboard');
       else if (user.role === 'PARENT') router.push('/parent');
@@ -53,6 +59,9 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => api.post('/auth/logout'),
     onSuccess: () => {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('study_token');
+      }
       queryClient.clear();
       router.push('/');
     },

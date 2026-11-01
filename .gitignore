@@ -1,32 +1,97 @@
+# =============================================================================
+# SMART STUDY PORTAL — PRODUCTION GITIGNORE
+# =============================================================================
+
+# --- Environment and Secret Files ---
+.env
+.env.*
+.env*.local
+.env.local
+!.env.example
+!.env.production.example
+!frontend/.env.example
+!backend/.env.production.example
+!ml/.env.production.example
+cookies.txt
+
+# --- Logs & Runtime Artifacts ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+backend-start*.log
+frontend-start*.log
+mysql-*.log
+
+# --- Frontend Build Artifacts (Next.js / Node) ---
 node_modules/
 .next/
 out/
-target/
-__pycache__/
-.venv/
-.env
-.env*.local
-.env.local
-*.log
-uploads/
-backend/.m2/
+dist/
+build/
+.pnp
+.pnp.js
 *.tsbuildinfo
-mysql-local/
-docs/*.md
-!docs/PROGRESS.md
-!docs/DECISIONS.md
-!docs/HUMAN_ACTIONS.md
-!docs/AUDIT.md
-!docs/ENVIRONMENT.md
-!docs/ui-audit.md
-!docs/ui-redesign-plan.md
-.vscode/
+.turbo/
 
-# Local DB, storage & cache
-mysql-fresh-data/
-chroma_data/
-ml/chroma_data/
-ml/chroma_db/
+# --- Backend Build Artifacts (Spring Boot / Maven) ---
+target/
+backend/target/
+backend/.m2/
 .tmp-maven-repo/
+
+# --- Python & ML Engine Artifacts ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.cache/
+
+# --- Local Databases & Backups (NEVER commit local student data) ---
+mysql-fresh-data/
+mysql-local/
+*.sql
+!backend/src/main/resources/db/migration/*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Vector Databases & Embedding Storage ---
+chroma_data/
+chroma_data*/
+ml/chroma_data/
+ml/chroma_data*/
+ml/chroma_db/
+ml/data/
+
+# --- Uploaded Student Documents & Temporary Storage ---
+/uploads/
+backend/uploads/
+/storage/
+scratch/
+
+# --- Large Model Files & Weights ---
+/models/
+*.gguf
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# --- IDEs & Developer Tooling ---
+.vscode/
+.idea/
 .claude/
-cookies.txt
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

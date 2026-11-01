@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
 
 type UserData = {
   id?: number;

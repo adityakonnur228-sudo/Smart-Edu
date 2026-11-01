@@ -1,5 +1,6 @@
 'use client';
 
+import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, FocusSessionSchema, type FocusSession } from '@/lib/api';
 
@@ -67,5 +68,3 @@ export function useCompleteFocusSession() {
     },
   });
 }
-
-import { z } from 'zod';

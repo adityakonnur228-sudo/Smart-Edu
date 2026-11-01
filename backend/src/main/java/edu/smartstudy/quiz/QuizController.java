@@ -17,6 +17,7 @@ import org.springframework.web.client.RestClient;
 @RestController
 @RequestMapping("/api/v1/quizzes")
 public class QuizController {
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(QuizController.class);
     private final QuizRepository quizzes;
     private final QuizAttemptRepository attempts;
     private final MaterialRepository materials;
@@ -39,7 +40,7 @@ public class QuizController {
         this.defaultOpenRouterApiKey = defaultOpenRouterApiKey;
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(15));
-        factory.setReadTimeout(Duration.ofSeconds(90));
+        factory.setReadTimeout(Duration.ofSeconds(120));
         this.ml = RestClient.builder()
                 .requestFactory(factory)
                 .baseUrl(mlUrl)
@@ -56,10 +57,20 @@ public class QuizController {
             String topic,
             Integer count,
             String model,
-            String apiKey
+            String apiKey,
+            String mode,
+            String searchFocus,
+            String difficulty,
+            String timeRange
     ) {
         public GenerateRequest(Long materialId, String topic, Integer count) {
-            this(materialId, topic, count, null, null);
+            this(materialId, topic, count, null, null, null, null, null, null);
+        }
+        public GenerateRequest(Long materialId, String topic, Integer count, String model, String apiKey) {
+            this(materialId, topic, count, model, apiKey, null, null, null, null);
+        }
+        public GenerateRequest(Long materialId, String topic, Integer count, String model, String apiKey, String mode) {
+            this(materialId, topic, count, model, apiKey, mode, null, null, null);
         }
     }
 
@@ -97,12 +108,27 @@ public class QuizController {
     @GetMapping("/config")
     public Map<String, Object> getConfig() {
         boolean hasServerKey = defaultOpenRouterApiKey != null && !defaultOpenRouterApiKey.isBlank();
-        String defaultModel = hasServerKey ? "nvidia/nemotron-3-ultra-550b-a55b:free" : "smartstudy-tutor";
+        String defaultModel = "smartstudy-tutor";
         return Map.of(
                 "hasServerKey", hasServerKey,
                 "defaultModel", defaultModel,
                 "provider", hasServerKey ? "openrouter" : "local"
         );
+    }
+
+    @GetMapping("/live-search/status")
+    public ResponseEntity<?> getLiveSearchStatus() {
+        try {
+            Map<?, ?> stats = ml.get().uri("/ml/v1/search/usage")
+                    .retrieve()
+                    .body(Map.class);
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of(
+                    "configured", false,
+                    "error", "Could not reach search service: " + e.getMessage()
+            ));
+        }
     }
 
     @PostMapping("/test-key")
@@ -128,7 +154,7 @@ public class QuizController {
             key = defaultOpenRouterApiKey;
         }
         if (model == null || model.isBlank()) {
-            model = (key != null && !key.isBlank()) ? "nvidia/nemotron-3-ultra-550b-a55b:free" : "smartstudy-tutor";
+            model = (key != null && !key.isBlank()) ? "smartstudy-tutor" : "smartstudy-tutor";
         }
 
         try {
@@ -174,21 +200,49 @@ public class QuizController {
                 : (clientLlmModel != null && !clientLlmModel.isBlank())
                     ? clientLlmModel.trim()
                     : (!clientApiKey.isBlank())
-                        ? "nvidia/nemotron-3-ultra-550b-a55b:free"
+                        ? "smartstudy-tutor"
                         : "smartstudy-tutor";
 
         String topicName = input.topic() != null ? input.topic().trim() : "";
         Long targetMaterialId = input.materialId();
+        String requestedMode = input.mode() != null ? input.mode().trim().toLowerCase() : "";
+        boolean isLiveMode = "live".equals(requestedMode) || "web".equals(requestedMode) || "live-research".equals(requestedMode);
+        boolean isMaterialMode = "material".equals(requestedMode) || (!isLiveMode && targetMaterialId != null && targetMaterialId > 0);
+
         Material material = null;
 
-        if (targetMaterialId != null && targetMaterialId > 0) {
+        if (isLiveMode) {
+            if (topicName.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Please provide a search topic for live web research."));
+            }
+            final String finalTopicName = topicName;
+            material = materials.findTop100ByOwnerIdOrderByCreatedAtDesc(student).stream()
+                    .filter(m -> finalTopicName.equalsIgnoreCase(m.getTitle()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        String cleanSlug = finalTopicName.toLowerCase().replaceAll("[^a-z0-9]+", "-");
+                        Material newMat = new Material(
+                                student,
+                                finalTopicName,
+                                cleanSlug + ".txt",
+                                "live-" + UUID.randomUUID(),
+                                "text/plain",
+                                (long) finalTopicName.length()
+                        );
+                        newMat.complete("Live web research quiz on: " + finalTopicName, "Live web summary", "[]", "[]");
+                        return materials.save(newMat);
+                    });
+        } else if (isMaterialMode) {
+            if (targetMaterialId == null || targetMaterialId <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "A valid study note ID is required to generate a note-grounded quiz."));
+            }
             material = materials.findByIdAndOwnerId(targetMaterialId, student).orElse(null);
-            if (material == null) return ResponseEntity.notFound().build();
+            if (material == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "The requested study note was not found or does not belong to your account."));
             if (!"COMPLETED".equals(material.getStatus()) || material.getExtractedText() == null) {
                 return ResponseEntity.status(409).body(Map.of("error", "Wait until this note has finished processing."));
             }
         } else if (!topicName.isBlank()) {
-            // Check if existing material for this topic or create a lightweight placeholder material for FK
+            // Mode A: Topic Mode
             final String finalTopicName = topicName;
             material = materials.findTop100ByOwnerIdOrderByCreatedAtDesc(student).stream()
                     .filter(m -> finalTopicName.equalsIgnoreCase(m.getTitle()))
@@ -212,13 +266,29 @@ public class QuizController {
 
         // Prepare ML request payload
         Map<String, Object> mlReq = new HashMap<>();
-        if (!topicName.isBlank()) {
+        if (isLiveMode) {
+            mlReq.put("mode", "live");
             mlReq.put("topic", topicName);
-        } else if (material != null) {
-            mlReq.put("topic", material.getTitle());
-        }
-        if (material != null && material.getExtractedText() != null && !material.getExtractedText().startsWith("Quiz study topic for:")) {
-            mlReq.put("text", material.getExtractedText());
+            mlReq.put("search_focus", input.searchFocus() != null ? input.searchFocus() : "general");
+            mlReq.put("difficulty", input.difficulty() != null ? input.difficulty() : "MEDIUM");
+            if (input.timeRange() != null) {
+                mlReq.put("time_range", input.timeRange());
+            }
+            mlReq.put("student_id", student);
+        } else if (isMaterialMode) {
+            mlReq.put("mode", "material");
+            mlReq.put("material_id", material.getId());
+            mlReq.put("material_title", material.getTitle());
+            if (material.getExtractedText() != null && !material.getExtractedText().startsWith("Quiz study topic for:") && !material.getExtractedText().startsWith("Live web research quiz on:")) {
+                mlReq.put("text", material.getExtractedText());
+            }
+            if (!topicName.isBlank()) {
+                mlReq.put("topic", topicName);
+            }
+        } else {
+            mlReq.put("mode", "topic");
+            mlReq.put("topic", topicName);
+            // In topic mode, do NOT send text from placeholder materials
         }
         mlReq.put("count", input.count() != null ? input.count() : 5);
         if (clientApiKey != null) {
@@ -231,7 +301,8 @@ public class QuizController {
         Map<?, ?> generated;
         try {
             var postBuilder = ml.post().uri("/ml/v1/questions")
-                    .contentType(MediaType.APPLICATION_JSON);
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON, MediaType.ALL);
             if (clientApiKey != null) {
                 postBuilder.header("X-OpenRouter-Api-Key", clientApiKey);
                 postBuilder.header("X-LLM-Api-Key", clientApiKey);
@@ -239,15 +310,55 @@ public class QuizController {
             if (model != null && !model.isBlank()) {
                 postBuilder.header("X-LLM-Model", model);
             }
-            generated = postBuilder.body(mlReq).retrieve().body(Map.class);
+            ResponseEntity<String> responseEntity = postBuilder.body(mlReq)
+                    .retrieve()
+                    .toEntity(String.class);
+
+            String bodyStr = responseEntity.getBody();
+            MediaType respContentType = responseEntity.getHeaders().getContentType();
+            logger.info("[QuizController] Downstream /ml/v1/questions status={}, contentType={}, bytes={}",
+                    responseEntity.getStatusCode(), respContentType, bodyStr != null ? bodyStr.length() : 0);
+
+            if (bodyStr == null || bodyStr.isBlank()) {
+                return ResponseEntity.status(502).body(Map.of("error", "Empty response from ML question generation service."));
+            }
+
+            generated = json.readValue(bodyStr, Map.class);
+        } catch (org.springframework.web.client.RestClientResponseException e) {
+            String errorBody = e.getResponseBodyAsString();
+            logger.warn("[QuizController] ML service returned HTTP {}: {}", e.getStatusCode(), errorBody);
+            try {
+                Map<?, ?> errMap = json.readValue(errorBody, Map.class);
+                if (errMap.containsKey("error") || errMap.containsKey("detail")) {
+                    return ResponseEntity.status(e.getStatusCode()).body(errMap);
+                }
+            } catch (Exception ignored) {}
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", "Quiz generation failed: " + (errorBody.isBlank() ? e.getStatusText() : errorBody)));
         } catch (Exception e) {
-            return ResponseEntity.status(503).body(Map.of("error", "The quiz generation service is temporarily unavailable."));
+            logger.error("[QuizController] Exception calling ML question service: {}", e.getMessage(), e);
+            return ResponseEntity.status(503).body(Map.of("error", "The quiz generation service is temporarily unavailable. Please try again."));
         }
 
         List<Map<String, Object>> questions = json.convertValue(generated.get("questions"), new TypeReference<>() {});
         if (questions == null || questions.isEmpty()) {
             String notice = generated.get("notice") != null ? generated.get("notice").toString() : "Could not generate questions. Please ensure notes contain content or specify a valid topic.";
             return ResponseEntity.status(422).body(Map.of("error", notice));
+        }
+
+        // Question topic integrity check: prevent cross-domain contamination from leaking to student
+        if (!isMaterialMode && !topicName.isBlank()) {
+            String topicLower = topicName.toLowerCase();
+            boolean isCloudTopic = topicLower.contains("cloud") || topicLower.contains("iaas") || topicLower.contains("paas") || topicLower.contains("saas");
+            if (!isCloudTopic) {
+                boolean hasContamination = questions.stream().anyMatch(q -> {
+                    String qText = Objects.toString(q.get("question"), "").toLowerCase();
+                    String qExp = Objects.toString(q.get("explanation"), "").toLowerCase();
+                    return qText.contains("cloud computing") || qText.contains("google app engine") || qExp.contains("cloud computing");
+                });
+                if (hasContamination) {
+                    return ResponseEntity.status(422).body(Map.of("error", "Question generation rejected due to topic cross-contamination."));
+                }
+            }
         }
 
         // If ML service resolved deep context for this topic, save it to the material record for future tutor grounding
@@ -295,7 +406,8 @@ public class QuizController {
                 apiKey = body.get("api_key").toString();
             }
         }
-        return generate(new GenerateRequest(materialId, null, count, model, apiKey), clientOpenRouterApiKey, clientLlmApiKey, clientLlmModel, a);
+        String topic = body != null && body.get("topic") != null ? body.get("topic").toString() : null;
+        return generate(new GenerateRequest(materialId, topic, count, model, apiKey, "material"), clientOpenRouterApiKey, clientLlmApiKey, clientLlmModel, a);
     }
 
     @GetMapping("/{id}")
@@ -363,14 +475,19 @@ public class QuizController {
 
                 if (isCorrect) correct++;
 
-                itemResults.add(Map.of(
-                        "question", Objects.toString(question.get("question"), ""),
-                        "selectedAnswer", selected,
-                        "correctAnswer", expected,
-                        "correct", isCorrect,
-                        "explanation", Objects.toString(question.get("explanation"), "Correct answer: " + expected),
-                        "sourceReference", Objects.toString(question.get("source_reference"), "Study notes")
-                ));
+                Map<String, Object> itemMap = new HashMap<>();
+                itemMap.put("question", Objects.toString(question.get("question"), ""));
+                itemMap.put("selectedAnswer", selected);
+                itemMap.put("correctAnswer", expected);
+                itemMap.put("correct", isCorrect);
+                itemMap.put("explanation", Objects.toString(question.get("explanation"), "Correct answer: " + expected));
+                itemMap.put("sourceReference", Objects.toString(question.get("source_reference"), "Study notes"));
+                if (question.get("source_url") != null) itemMap.put("sourceUrl", question.get("source_url"));
+                if (question.get("source_title") != null) itemMap.put("sourceTitle", question.get("source_title"));
+                if (question.get("published_date") != null) itemMap.put("publishedDate", question.get("published_date"));
+                if (question.get("source_snippet") != null) itemMap.put("sourceSnippet", question.get("source_snippet"));
+                if (question.get("provider") != null) itemMap.put("provider", question.get("provider"));
+                itemResults.add(itemMap);
             }
 
             String answersJson = "[]";

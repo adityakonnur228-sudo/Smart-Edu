@@ -1,65 +1,74 @@
-# Multi-stage build for ML worker
+# =============================================================================
+# SMART STUDY PORTAL — PRODUCTION FASTAPI ML ENGINE DOCKERFILE
+# Multi-stage build: Python 3.12-slim
+# =============================================================================
+
+# Stage 1: Build & install Python packages
 FROM python:3.12-slim AS builder
 WORKDIR /app
 
-# Install system dependencies for PyMuPDF and Tesseract
+# Install build dependencies and system libraries for PyMuPDF and OCR
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    libgl1-mesa-glx \
+    libgl1 \
     tesseract-ocr \
     tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Install Python wheels
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Pre-download embedding model if enabled
-ARG EMBEDDINGS_ENABLED=false
-ARG EMBEDDINGS_MODEL=sentence-transformers/all-MiniLM-L6-v2
-RUN if [ "$EMBEDDINGS_ENABLED" = "true" ]; then \
-    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('$EMBEDDINGS_MODEL')"; \
-    fi
-
-# Runtime stage
+# Stage 2: Minimal Runtime
 FROM python:3.12-slim
 WORKDIR /app
 
-# Install runtime dependencies
+# Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    libgl1-mesa-glx \
+    libgl1 \
     tesseract-ocr \
     tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
+# Create non-root system user
 RUN addgroup --gid 1000 --system appgroup && \
     adduser --uid 1000 --system --ingroup appgroup appuser
 
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /root/.local /home/appuser/.local
 
-# Copy application code
+# Ensure path includes user-installed packages
+ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
+ENV CHROMA_PERSIST_DIR=/data/chroma
+
+# Copy application source code
 COPY app ./app
 
-# Switch to non-root user
+# Create persistent storage directories with appropriate permissions
+RUN mkdir -p /data/chroma /app/data && \
+    chown -R appuser:appgroup /app /data /home/appuser
+
+# Switch to non-root execution
 USER appuser
 
-# Expose port (only for internal network)
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8000/ml/v1/health || exit 1
+# Health check using the lightweight /health endpoint
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-8000}/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start Uvicorn with dynamic port binding and exec for proper signal propagation
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]

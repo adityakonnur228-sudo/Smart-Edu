@@ -1,0 +1,33 @@
+{
+  "subject_id": "rpa",
+  "subject_name": "Robotic Process Automation",
+  "course_code": "UNVERIFIED_RPA",
+  "scheme": "2022",
+  "semester": null,
+  "classification": "Supplementary",
+  "credits": null,
+  "source_pdf": "N/A",
+  "verification_status": "SUPPLEMENTARY_EU_SLIDES",
+  "notes_status": {
+    "syllabus_extracted": true,
+    "notes_download_status": "DOWNLOADED",
+    "notes_indexing_status": "INDEXED",
+    "final_filename": "RPA.pdf",
+    "file_hash": "4aacac49f310694f93c053dd44c71dc5b9487c1b097a9d89863bcf4ccbd41f7a",
+    "page_count": 21,
+    "chunk_count": 5,
+    "indexing_timestamp": "2026-10-31T09:53:35.886887+00:00",
+    "verification_status": "SUPPLEMENTARY_EU_SLIDES",
+    "module_coverage": "N/A (Supplementary Subject)",
+    "coverage_percentage": "N/A (Supplementary Overview)",
+    "missing_information": "Not part of official VTU 2022 AIML syllabus",
+    "embedding_model": "nomic-embed-text:latest",
+    "embedding_dimension": 768,
+    "vector_store": "ChromaDB",
+    "chroma_collection": "vtu_academic_knowledge",
+    "resource_classification": "SUPPLEMENTARY_RESOURCE",
+    "provenance": "Dr. Julia Siderska, Bialystok University of Technology (Poland) EU Project 101104819 - 21 training slides."
+  },
+  "resource_classification": "SUPPLEMENTARY_RESOURCE",
+  "provenance_description": "Dr. Julia Siderska, Bialystok University of Technology (Poland) EU Project 101104819 - 21 training slides."
+}

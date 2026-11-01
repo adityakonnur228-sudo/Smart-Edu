@@ -1,5 +1,8 @@
 package edu.smartstudy.material;
 
+import edu.smartstudy.storage.StorageService;
+import java.io.InputStream;
+
 import edu.smartstudy.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -34,11 +37,13 @@ public class MaterialController {
     private final MaterialChunkRepository chunkRepo;
     private final Path uploadDir;
     private final MaterialProcessor processor;
+    private final StorageService storageService;
     private final int maxUploadMb;
     private final long userStorageQuotaMb;
 
     public MaterialController(MaterialRepository repo, UserRepository users, MaterialChunkRepository chunkRepo,
                               MaterialProcessor processor,
+                              StorageService storageService,
                               @Value("${app.upload-dir}") String dir,
                               @Value("${app.max-upload-mb:20}") int maxUploadMb,
                               @Value("${app.user-storage-quota-mb:500}") long userStorageQuotaMb) {
@@ -46,6 +51,7 @@ public class MaterialController {
         this.users = users;
         this.chunkRepo = chunkRepo;
         this.processor = processor;
+        this.storageService = storageService;
         this.uploadDir = Path.of(dir).toAbsolutePath().normalize();
         this.maxUploadMb = maxUploadMb;
         this.userStorageQuotaMb = userStorageQuotaMb;
@@ -92,8 +98,8 @@ public class MaterialController {
                                      @RequestParam(defaultValue = "50") int size) {
         Material m = repo.findByIdAndOwnerId(id, owner(a)).orElse(null);
         if (m == null) return ResponseEntity.notFound().build();
-        if (!"COMPLETED".equals(m.getStatus()) || m.getExtractedText() == null) {
-            return ResponseEntity.status(409).body(Map.of("error", "Material not yet processed"));
+        if (!m.isReady()) {
+            return ResponseEntity.status(409).body(Map.of("error", "Material not yet processed", "status", m.getStatus()));
         }
         page = Math.max(0, page);
         size = Math.min(200, Math.max(1, size));
@@ -114,17 +120,18 @@ public class MaterialController {
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id, Authentication a) {
         Material m = repo.findByIdAndOwnerId(id, owner(a)).orElse(null);
         if (m == null) return ResponseEntity.notFound().build();
-        Path file = uploadDir.resolve(m.storageKey()).normalize();
-        if (!file.startsWith(uploadDir) || !Files.isRegularFile(file)) {
+        Resource resource;
+        try {
+            resource = storageService.loadAsResource(m.storageKey());
+        } catch (Exception e) {
             return ResponseEntity.status(410).build();
         }
-        Resource resource = new FileSystemResource(file);
         String filename = m.getFileName();
         long contentLength;
         try {
-            contentLength = Files.size(file);
-        } catch (IOException e) {
-            contentLength = -1;
+            contentLength = resource.contentLength();
+        } catch (Exception e) {
+            contentLength = m.getFileSize();
         }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -156,18 +163,29 @@ public class MaterialController {
             return ResponseEntity.badRequest().body(Map.of("error", "Choose a non-empty file smaller than " + maxUploadMb + " MB"));
         }
 
-        String key = UUID.randomUUID().toString();
-        Files.createDirectories(uploadDir);
-        Path dest = uploadDir.resolve(key).normalize();
-        if (!dest.startsWith(uploadDir)) return ResponseEntity.badRequest().build();
+        // Duplicate check: check if student has already uploaded this exact file and it is ready or processing
+        List<Material> existing = repo.findByOwnerIdOrderByCreatedAtDesc(userId, PageRequest.of(0, 50)).getContent();
+        for (Material em : existing) {
+            if (em.getFileName().equalsIgnoreCase(original) && em.getFileSize() == f.getSize()) {
+                if ("COMPLETED".equals(em.getStatus()) || "INDEXED".equals(em.getStatus()) || "PROCESSING".equals(em.getStatus())) {
+                    if (storageService.exists(em.storageKey())) {
+                        // Return the existing material to avoid duplicate uploads and vector bloat
+                        return ResponseEntity.ok(em);
+                    }
+                }
+            }
+        }
 
-        f.transferTo(dest);
+        String key = UUID.randomUUID().toString();
+        try (InputStream in = f.getInputStream()) {
+            storageService.store(key, in, f.getSize(), f.getContentType());
+        }
 
         Material m = new Material(userId, original.replaceFirst("(?i)\\.[^.]+$", ""), original, key,
                 Objects.requireNonNullElse(f.getContentType(), "application/octet-stream"), f.getSize());
         m.processing();
         Material saved = repo.save(m);
-        processor.process(saved.getId(), dest);
+        processor.process(saved.getId());
         return ResponseEntity.accepted().body(saved);
     }
 
@@ -215,7 +233,7 @@ public class MaterialController {
         }
     }
 
-    @PostMapping("/{id}/process")
+    @PostMapping({"/{id}/process", "/{id}/retry"})
     public ResponseEntity<?> retry(@PathVariable Long id, Authentication a) {
         Long userId = owner(a);
         Material m = repo.findByIdAndOwnerId(id, userId).orElse(null);
@@ -229,7 +247,7 @@ public class MaterialController {
         }
         m.processing();
         Material saved = repo.save(m);
-        processor.process(id, file);
+        processor.retry(id);
         return ResponseEntity.accepted().body(saved);
     }
 

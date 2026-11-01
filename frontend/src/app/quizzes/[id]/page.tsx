@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -17,6 +18,8 @@ import {
   Check,
   Clock,
   Trash2,
+  ExternalLink,
+  Globe,
 } from "lucide-react";
 import { demoQuizResult, demoQuizzes } from "../../demo-data";
 import { Navbar } from "../../navbar";
@@ -26,8 +29,18 @@ type Question = {
   question: string;
   options: string[];
   explanation: string;
-  difficulty: string;
-  source_reference: string;
+  difficulty?: string;
+  source_reference?: string;
+  sourceReference?: string;
+  source_url?: string;
+  sourceUrl?: string;
+  source_title?: string;
+  sourceTitle?: string;
+  published_date?: string | null;
+  publishedDate?: string | null;
+  source_snippet?: string;
+  sourceSnippet?: string;
+  provider?: string;
   correctAnswer?: string;
   answer?: string;
 };
@@ -45,7 +58,12 @@ type ResultItem = {
   correctAnswer: string;
   correct: boolean;
   explanation: string;
-  sourceReference: string;
+  sourceReference?: string;
+  sourceUrl?: string;
+  sourceTitle?: string;
+  publishedDate?: string | null;
+  sourceSnippet?: string;
+  provider?: string;
 };
 
 type Result = {
@@ -56,8 +74,17 @@ type Result = {
   notice?: string;
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
 const OPTION_LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+function notifyMutation(type: string) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("smartstudy:mutation", { detail: { type } }));
+    try {
+      localStorage.setItem("smartstudy:last_mutation", `${type}:${Date.now()}`);
+    } catch {}
+  }
+}
 
 export default function QuizDetail() {
   const params = useParams<{ id: string }>();
@@ -124,6 +151,8 @@ export default function QuizDetail() {
         const demoQuestions = quiz.questions.map((q) => ({
           ...q,
           correctAnswer: q.correctAnswer ?? q.answer ?? q.options[0],
+          difficulty: q.difficulty || "MEDIUM",
+          source_reference: q.source_reference || q.sourceReference || "Demo Notes",
         }));
         setResult(demoQuizResult(demoQuestions, answers));
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -142,6 +171,7 @@ export default function QuizDetail() {
         throw new Error(data.error || "Could not submit this quiz attempt.");
       }
       setResult(data as Result);
+      notifyMutation("quiz");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not submit this quiz.");
@@ -202,7 +232,7 @@ export default function QuizDetail() {
               size="sm"
               onClick={() => setShowDeleteModal(true)}
               disabled={busy}
-              icon={<Trash2 size={13} />}
+              icon={<Trash2 size={13} className="shrink-0" />}
               className="text-xs"
             >
               Delete
@@ -250,22 +280,22 @@ export default function QuizDetail() {
             </div>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <Button
                 variant="primary"
                 onClick={handleRetake}
-                icon={<RotateCw size={14} />}
+                icon={<RotateCw size={14} className="shrink-0" />}
                 className="text-xs"
               >
                 Retake Quiz
               </Button>
               <Link href="/ai-tutor">
-                <Button variant="secondary" icon={<Sparkles size={14} />} className="text-xs">
+                <Button variant="secondary" icon={<Sparkles size={14} className="shrink-0" />} className="text-xs">
                   Ask AI Tutor
                 </Button>
               </Link>
               <Link href="/quizzes">
-                <Button variant="ghost" icon={<ArrowLeft size={14} />} className="text-xs">
+                <Button variant="ghost" icon={<ArrowLeft size={14} className="shrink-0" />} className="text-xs">
                   All Quizzes
                 </Button>
               </Link>
@@ -337,12 +367,40 @@ export default function QuizDetail() {
                       {item.explanation}
                     </div>
 
-                    {item.sourceReference && (
+                    {item.sourceUrl ? (
+                      <div className="pt-2.5 mt-2 border-t border-brand-neutral/20 space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium">
+                            <Globe size={11} /> Live Web Source
+                          </span>
+                          <a
+                            href={item.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-sky-400 hover:text-sky-300 hover:underline font-medium truncate max-w-md"
+                            title={item.sourceTitle || item.sourceUrl}
+                          >
+                            <span>{item.sourceTitle || item.sourceReference || "Verified Source"}</span>
+                            <ExternalLink size={11} className="shrink-0" />
+                          </a>
+                          {item.publishedDate && (
+                            <span className="text-brand-muted text-[10px]">
+                              &bull; Published: {item.publishedDate}
+                            </span>
+                          )}
+                        </div>
+                        {item.sourceSnippet && (
+                          <p className="text-[11px] text-brand-muted bg-brand-raised/60 p-2 rounded border border-brand-neutral/15 italic">
+                            &ldquo;{item.sourceSnippet}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    ) : item.sourceReference ? (
                       <p className="text-[11px] text-brand-muted flex items-center gap-1.5 pt-2 border-t border-brand-neutral/20">
                         <BookOpen size={12} className="text-brand-neutral" />
                         <span>Source Reference: {item.sourceReference}</span>
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -442,12 +500,34 @@ export default function QuizDetail() {
                       })}
                     </div>
 
-                    {question.source_reference && (
+                    {(question.source_url || question.sourceUrl) ? (
+                      <div className="pt-2 border-t border-brand-neutral/20 flex items-center justify-between gap-2 text-[11px] text-brand-muted flex-wrap">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Globe size={12} className="text-sky-400 shrink-0" />
+                          <span className="text-sky-400 font-medium shrink-0">Live Web Grounded &bull;</span>
+                          <a
+                            href={question.source_url || question.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-neutral hover:text-white hover:underline inline-flex items-center gap-1 truncate max-w-xs"
+                            title={question.source_title || question.sourceTitle || "Verified Web Source"}
+                          >
+                            <span className="truncate">{question.source_title || question.sourceTitle || question.source_reference || "Verified Source"}</span>
+                            <ExternalLink size={10} className="shrink-0" />
+                          </a>
+                        </div>
+                        {(question.published_date || question.publishedDate) && (
+                          <span className="text-[10px] text-brand-muted shrink-0">
+                            Published: {question.published_date || question.publishedDate}
+                          </span>
+                        )}
+                      </div>
+                    ) : question.source_reference ? (
                       <p className="text-[11px] text-brand-muted flex items-center gap-1.5 pt-2 border-t border-brand-neutral/20">
                         <BookOpen size={12} className="text-brand-neutral" />
                         <span>Reference: {question.source_reference}</span>
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -471,7 +551,7 @@ export default function QuizDetail() {
                   onClick={() => void submit()}
                   disabled={busy}
                   loading={busy}
-                  icon={<ArrowRight size={14} />}
+                  icon={<ArrowRight size={14} className="shrink-0" />}
                   className="text-xs py-2 px-5"
                 >
                   {busy ? "Evaluating..." : "Submit Quiz"}

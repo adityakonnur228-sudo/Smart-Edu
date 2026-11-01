@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { useCallback, useEffect, useState, useMemo, type FormEvent } from "react";
 import Link from "next/link";
@@ -46,7 +47,16 @@ type Plan = {
   dailyAvailableMinutes: number;
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
+
+function notifyMutation(type: string) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("smartstudy:mutation", { detail: { type } }));
+    try {
+      localStorage.setItem("smartstudy:last_mutation", `${type}:${Date.now()}`);
+    } catch {}
+  }
+}
 
 export default function TasksPage() {
   const router = useRouter();
@@ -157,7 +167,7 @@ export default function TasksPage() {
       subject: String(form.get("subject") || "General Study"),
       scheduledDate: (form.get("date") as string) || undefined,
       estimatedMinutes: Number(form.get("duration") || 30),
-      priority: String(form.get("priority") || "NORMAL"),
+      priority: String(form.get("priority") || "MEDIUM"),
     };
 
     try {
@@ -174,6 +184,7 @@ export default function TasksPage() {
       setTasks((curr) => [...curr, result as Task]);
       setShowAddForm(false);
       setSuccess(`Task "${body.title}" added to your schedule.`);
+      notifyMutation("tasks");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add task.");
     }
@@ -222,6 +233,7 @@ export default function TasksPage() {
             item.id === task.id ? { ...item, status: task.status === "COMPLETED" ? "PENDING" : "COMPLETED" } : item
           )
         );
+        notifyMutation("tasks");
       } else {
         throw new Error("Could not toggle task status.");
       }
@@ -242,6 +254,7 @@ export default function TasksPage() {
       if (!res.ok) throw new Error("Could not delete task.");
       setTasks((curr) => curr.filter((t) => t.id !== deleteTarget.id));
       setSuccess(`Task "${deleteTarget.title}" deleted.`);
+      notifyMutation("tasks");
       setDeleteTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete task.");
@@ -268,10 +281,11 @@ export default function TasksPage() {
     }
   }
 
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
   // Group tasks by scheduled date
   const groupedTasks = useMemo(() => {
     const groups: { [key: string]: Task[] } = {};
-    const todayStr = new Date().toISOString().slice(0, 10);
 
     for (const t of tasks) {
       let key = "Unscheduled";
@@ -285,11 +299,15 @@ export default function TasksPage() {
     }
 
     return groups;
-  }, [tasks]);
+  }, [tasks, todayStr]);
 
   const completedCount = tasks.filter((t) => t.status === "COMPLETED").length;
+  const pendingCount = tasks.filter((t) => t.status !== "COMPLETED").length;
   const totalCount = tasks.length;
   const completionPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const pendingMinutes = tasks
+    .filter((t) => t.status !== "COMPLETED")
+    .reduce((sum, t) => sum + (t.estimatedMinutes || 0), 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-primary text-brand-neutral">
@@ -303,7 +321,7 @@ export default function TasksPage() {
           title="Daily Study Plan"
           description="Adaptive study blocks generated from your notes, balanced against your daily study time."
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {tasks.length > 0 && (
                 <Button
                   variant="ghost"
@@ -320,7 +338,7 @@ export default function TasksPage() {
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowPlanConfig(!showPlanConfig)}
-                icon={<RotateCw size={13} />}
+                icon={<RotateCw size={13} className="shrink-0" />}
                 className="text-xs"
               >
                 {showPlanConfig ? "Hide Config" : "Regenerate Plan"}
@@ -329,7 +347,7 @@ export default function TasksPage() {
                 variant="primary"
                 size="sm"
                 onClick={() => setShowAddForm(!showAddForm)}
-                icon={<Plus size={14} />}
+                icon={<Plus size={14} className="shrink-0" />}
                 className="text-xs"
               >
                 Add Task
@@ -360,21 +378,40 @@ export default function TasksPage() {
         )}
 
         {/* Progress Strip */}
-        <div className="p-4 rounded-xl bg-brand-secondary border border-brand-neutral/20 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-[11px] font-mono text-brand-muted uppercase tracking-wider">
-              Overall Completion
-            </span>
-            <div className="text-base font-semibold text-brand-light mt-0.5">
+        <div className="p-4.5 rounded-xl bg-brand-secondary border border-brand-neutral/20 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-brand-muted uppercase tracking-wider">
+                Overall Study Plan
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-medium border border-emerald-500/20">
+                {completedCount} Completed
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-accent/15 text-brand-accent font-medium border border-brand-accent/20">
+                {pendingCount} Pending
+              </span>
+            </div>
+            <div className="text-base sm:text-lg font-semibold text-brand-light">
               {completedCount} of {totalCount} Tasks Done ({completionPercent}%)
+              {pendingMinutes > 0 && (
+                <span className="text-xs font-normal text-brand-muted ml-2">
+                  &bull; ~{pendingMinutes} mins study time planned
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="w-full sm:w-48 h-2 rounded-full bg-brand-raised overflow-hidden">
-            <div
-              className="h-full bg-brand-accent rounded-full transition-all duration-300"
-              style={{ width: `${completionPercent}%` }}
-            />
+          <div className="w-full md:w-56 space-y-1.5 shrink-0">
+            <div className="flex justify-between text-[11px] text-brand-muted">
+              <span>Overall Goal</span>
+              <span className="font-semibold text-brand-light">{completionPercent}%</span>
+            </div>
+            <div className="w-full h-2.5 rounded-full bg-brand-raised overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-brand-accent to-emerald-400 rounded-full transition-all duration-300"
+                style={{ width: `${completionPercent}%` }}
+              />
+            </div>
           </div>
         </div>
 
@@ -471,8 +508,8 @@ export default function TasksPage() {
 
               <div>
                 <label className="block text-xs font-medium text-brand-neutral mb-1">Priority</label>
-                <select name="priority" defaultValue="NORMAL" className="w-full bg-brand-raised border border-brand-neutral/25 rounded-lg px-3 py-2 text-xs text-brand-light focus:outline-none focus:border-brand-neutral/40 transition-colors">
-                  <option value="NORMAL">Normal Priority</option>
+                <select name="priority" defaultValue="MEDIUM" className="w-full bg-brand-raised border border-brand-neutral/25 rounded-lg px-3 py-2 text-xs text-brand-light focus:outline-none focus:border-brand-neutral/40 transition-colors">
+                  <option value="LOW">Low Priority</option>
                   <option value="MEDIUM">Medium Priority</option>
                   <option value="HIGH">High Priority</option>
                 </select>
@@ -513,7 +550,7 @@ export default function TasksPage() {
             title="No study tasks scheduled"
             description="Generate a daily study plan from your uploaded notes or create custom tasks."
             action={
-              <Button variant="primary" size="sm" onClick={() => setShowAddForm(true)} icon={<Plus size={14} />}>
+              <Button variant="primary" size="sm" onClick={() => setShowAddForm(true)} icon={<Plus size={14} className="shrink-0" />}>
                 Create Your First Task
               </Button>
             }
@@ -597,6 +634,8 @@ export default function TasksPage() {
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <button
                             type="button"
+                            role="checkbox"
+                            aria-checked={isDone}
                             onClick={() => void toggleComplete(task)}
                             aria-label={`Mark "${task.title}" as ${isDone ? "incomplete" : "complete"}`}
                             className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
@@ -629,9 +668,24 @@ export default function TasksPage() {
                               )}
                             </div>
 
-                            <div className="flex items-center gap-2 text-[11px] text-brand-muted mt-0.5">
-                              {task.subject && <span>{task.subject}</span>}
-                              <span>&bull; {task.estimatedMinutes} mins</span>
+                            <div className="flex items-center gap-2 text-[11px] text-brand-muted mt-1 flex-wrap">
+                              {task.subject && (
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-brand-raised text-brand-neutral border border-brand-neutral/20 font-medium">
+                                  {task.subject}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Clock size={11} className="text-brand-muted shrink-0" />
+                                {task.estimatedMinutes} mins
+                              </span>
+                              {task.scheduledDate && (
+                                <span className="flex items-center gap-1 text-brand-muted">
+                                  <Calendar size={11} className="shrink-0" />
+                                  {task.scheduledDate === todayStr
+                                    ? "Today"
+                                    : new Date(task.scheduledDate).toLocaleDateString([], { month: "short", day: "numeric" })}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -643,7 +697,7 @@ export default function TasksPage() {
                               variant="secondary"
                               size="sm"
                               href={`/focus?taskId=${task.id}`}
-                              icon={<Play size={12} />}
+                              icon={<Play size={12} className="shrink-0" />}
                               className="text-xs py-1 px-2.5"
                             >
                               Focus
@@ -654,18 +708,18 @@ export default function TasksPage() {
                             type="button"
                             onClick={() => setEditing(task)}
                             aria-label={`Edit ${task.title}`}
-                            className="w-7 h-7 rounded flex items-center justify-center text-brand-muted hover:text-brand-neutral hover:bg-brand-raised transition-colors"
+                            className="btn-icon btn-icon-sm rounded-lg inline-flex items-center justify-center text-brand-muted hover:text-brand-neutral hover:bg-brand-raised transition-colors shrink-0 cursor-pointer"
                           >
-                            <Edit3 size={13} />
+                            <Edit3 size={13} className="shrink-0" />
                           </button>
 
                           <button
                             type="button"
                             onClick={() => setDeleteTarget(task)}
                             aria-label={`Delete ${task.title}`}
-                            className="w-7 h-7 rounded flex items-center justify-center text-brand-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="btn-icon btn-icon-sm rounded-lg inline-flex items-center justify-center text-brand-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={13} className="shrink-0" />
                           </button>
                         </div>
                       </article>

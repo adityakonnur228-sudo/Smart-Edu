@@ -1,0 +1,1689 @@
+{
+  "university": "Visvesvaraya Technological University",
+  "scheme": "2022",
+  "programme": "B.E.",
+  "branch": "Artificial Intelligence and Machine Learning",
+  "subjects": [
+    {
+      "subject_id": "operating_systems",
+      "subject_name": "Operating Systems",
+      "course_code": "BCS303",
+      "semester": 3,
+      "course_type": "Integrated Professional Core Course (IPCC)",
+      "credits": 4,
+      "classification": "Core",
+      "teaching_hours_per_week": "3:0:2",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Introduction to Operating Systems & System Structures",
+          "hours": 8,
+          "topics": [
+            "What operating systems do",
+            "Computer System organization",
+            "Computer System architecture",
+            "Operating System structure",
+            "Operating System operations",
+            "Process management",
+            "Memory management",
+            "Storage management",
+            "Protection and Security",
+            "Distributed system",
+            "Special-purpose systems",
+            "Computing environments",
+            "Operating System Services",
+            "User - Operating System interface",
+            "System calls",
+            "Types of system calls",
+            "System programs",
+            "Operating system design and implementation",
+            "Virtual machines",
+            "Operating System generation",
+            "System boot"
+          ],
+          "textbook_mapping": "Textbook 1: Chapter 1, 2",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            9,
+            10
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Process Management, Threads & CPU Scheduling",
+          "hours": 8,
+          "topics": [
+            "Process concept",
+            "Process scheduling",
+            "Operations on processes",
+            "Inter process communication",
+            "Multi-threaded Programming: Overview",
+            "Multithreading models",
+            "Thread Libraries",
+            "Threading issues",
+            "Process Scheduling: Basic concepts",
+            "Scheduling criteria",
+            "Scheduling algorithms (FCFS, SJF, Priority, Round Robin, Multilevel Queue)",
+            "Multiple-processor scheduling",
+            "Thread scheduling"
+          ],
+          "textbook_mapping": "Textbook 1: Chapter 3, 4, 5",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            10
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Process Synchronization & Deadlocks",
+          "hours": 8,
+          "topics": [
+            "Synchronization: The critical section problem",
+            "Peterson's solution",
+            "Synchronization hardware",
+            "Semaphores",
+            "Classical problems of synchronization (Bounded-Buffer, Readers-Writers, Dining-Philosophers)",
+            "Monitors",
+            "Deadlocks: System model",
+            "Deadlock characterization",
+            "Methods for handling deadlocks",
+            "Deadlock prevention",
+            "Deadlock avoidance (Banker's algorithm)",
+            "Deadlock detection",
+            "Recovery from deadlock"
+          ],
+          "textbook_mapping": "Textbook 1: Chapter 6, 7",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            10,
+            11
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Main Memory Management & Virtual Memory",
+          "hours": 8,
+          "topics": [
+            "Memory management strategies: Background",
+            "Swapping",
+            "Contiguous memory allocation",
+            "Paging",
+            "Structure of page table (Hierarchical, Hashed, Inverted)",
+            "Segmentation",
+            "Virtual Memory Management: Background",
+            "Demand paging",
+            "Copy-on-write",
+            "Page replacement policies (FIFO, Optimal, LRU, Counting-based)",
+            "Allocation of frames",
+            "Thrashing"
+          ],
+          "textbook_mapping": "Textbook 1: Chapter 8, 9",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            11
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "File System Storage & Protection",
+          "hours": 8,
+          "topics": [
+            "File system: File concept",
+            "Access methods",
+            "Directory and Disk structure",
+            "File system mounting",
+            "File sharing",
+            "Protection",
+            "Implementing File system: File system structure",
+            "File system implementation",
+            "Directory implementation",
+            "Allocation methods (Contiguous, Linked, Indexed)",
+            "Free space management",
+            "Mass storage structures: Disk structure",
+            "Disk attachment",
+            "Disk scheduling (FCFS, SSTF, SCAN, C-SCAN, LOOK)",
+            "Disk management",
+            "Swap space management",
+            "Goals and principles of protection",
+            "Access matrix and implementation",
+            "Revocation of access rights"
+          ],
+          "textbook_mapping": "Textbook 1: Chapter 10, 11, 12, 14",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            11
+          ]
+        }
+      ],
+      "textbooks": [
+        "Abraham Silberschatz, Peter Baer Galvin, Greg Gagne, 'Operating System Principles', 7th edition, Wiley-India, 2006."
+      ],
+      "reference_books": [
+        "Ann McHoes, Ida M Fylnn, 'Understanding Operating System', Cengage Learning, 6th Edition.",
+        "D.M Dhamdhere, 'Operating Systems: A Concept Based Approach', 3rd Ed, McGraw-Hill, 2013.",
+        "P.C.P. Bhatt, 'An Introduction to Operating Systems: Concepts and Practice', 4th Edition, PHI (EEE), 2014.",
+        "William Stallings, 'Operating Systems: Internals and Design Principles', 6th Edition, Pearson."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE"
+    },
+    {
+      "subject_id": "computer_networks",
+      "subject_name": "Computer Networks",
+      "course_code": "BCS502",
+      "semester": 5,
+      "course_type": "Integrated Professional Core Course (IPCC)",
+      "credits": 4,
+      "classification": "Core",
+      "teaching_hours_per_week": "3:0:2",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Introduction to Computer Networks & Physical Layer",
+          "hours": 8,
+          "topics": [
+            "Data Communications",
+            "Networks and Network Types",
+            "Networks Models: Protocol Layering",
+            "TCP/IP Protocol Suite",
+            "The OSI Model",
+            "Introduction to Physical Layer: Data and Signals",
+            "Digital Signals",
+            "Transmission Impairment",
+            "Data Rate Limits (Nyquist, Shannon)",
+            "Performance metrics",
+            "Transmission Media: Guided Media (Twisted Pair, Coaxial, Fiber Optic)",
+            "Unguided Media (Wireless, Radio, Microwave, Infrared)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1.1-1.4, 2.1-2.3, 3.1, 3.3, 3.4-3.6, 7.1-7.3",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            4
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Data Link Layer, Error Control & Medium Access Control",
+          "hours": 8,
+          "topics": [
+            "Error Detection and Correction: Introduction",
+            "Block Coding",
+            "Cyclic Codes (CRC)",
+            "Checksum",
+            "Forward Error Correction",
+            "Data Link Control (DLC) Services",
+            "Data-Link Layer Protocols",
+            "HDLC Protocol",
+            "Point-To-Point (PPP) Protocol",
+            "Media Access Control (MAC): Random Access (ALOHA, CSMA, CSMA/CD, CSMA/CA)",
+            "Controlled Access (Reservation, Polling, Token Passing)",
+            "Channelization (FDMA, TDMA, CDMA)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 9.1-9.5, 11.1-11.4, 12.1-12.3",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            4
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Network Layer: Addressing, Forwarding & Routing",
+          "hours": 8,
+          "topics": [
+            "Network Layer Services",
+            "Packet Switching (Datagram vs Virtual Circuit)",
+            "Network Layer Performance (Delay, Throughput, Packet Loss)",
+            "IPv4 Addresses (Classful, Classless CIDR, Subnetting)",
+            "Forwarding of IP Packets",
+            "Network Layer Protocols: Internet Protocol (IP) Datagram Format",
+            "ICMPv4",
+            "Routing Algorithms: Distance-Vector Routing (Bellman-Ford)",
+            "Link-State Routing (Dijkstra)",
+            "Unicast Routing Protocols: RIP, OSPF, BGP"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 18.1-18.5, 19.1, 19.2, 20.1-20.3",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            4,
+            5
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Transport Layer Protocols (UDP & TCP)",
+          "hours": 8,
+          "topics": [
+            "Introduction to Transport Layer",
+            "Transport-Layer Protocols: Simple Protocol",
+            "Stop-and-Wait Protocol",
+            "Go-Back-N (GBN) Protocol",
+            "Selective-Repeat (SR) Protocol",
+            "User Datagram Protocol (UDP): Datagram, Services, Applications",
+            "Transmission Control Protocol (TCP): Services, Features, Segment Header",
+            "A TCP Connection (Three-way handshake, Teardown)",
+            "Windows in TCP",
+            "Flow Control",
+            "Error Control",
+            "TCP Congestion Control (Slow Start, Congestion Avoidance, Fast Recovery)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 23.1, 23.2, 24.1-24.3, 24.5",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            5
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Application Layer & Quality of Service (QoS)",
+          "hours": 8,
+          "topics": [
+            "Application Layer Introduction",
+            "Client-Server Programming",
+            "Standard Client-Server Protocols: World Wide Web and HTTP (HTTP/1.1, HTTP/2)",
+            "File Transfer Protocol (FTP)",
+            "Electronic Mail (SMTP, POP3, IMAP)",
+            "Domain Name System (DNS)",
+            "Quality of Service: Data Flow Characteristics",
+            "Techniques to Improve QoS (Scheduling, Traffic Shaping, Leaky Bucket, Token Bucket)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 25.1, 25.2, 26.1-26.6, 30.1-30.2",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            5
+          ]
+        }
+      ],
+      "textbooks": [
+        "Behrouz A. Forouzan, 'Data Communications and Networking with TCP/IP Protocol Suite', 6th Edition, Tata McGraw-Hill, 2021/2022."
+      ],
+      "reference_books": [
+        "Larry L. Peterson and Bruce S. Davie: 'Computer Networks: A Systems Approach', 5th Edition, Elsevier, 2012.",
+        "James F. Kurose, Keith W. Ross: 'Computer Networking - A Top-Down Approach Featuring the Internet', 6th Edition, Pearson, 2013.",
+        "Nader F. Mir: 'Computer and Communication Networks', 2nd Edition, Pearson Education, 2015."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE"
+    },
+    {
+      "subject_id": "ada",
+      "subject_name": "Analysis & Design of Algorithms",
+      "course_code": "BCS401",
+      "semester": 4,
+      "course_type": "Professional Core Course / Basic Science (PCC/BSC)",
+      "credits": 3,
+      "classification": "Core",
+      "teaching_hours_per_week": "3:0:0",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Introduction to Algorithms, Analysis Framework & Brute Force",
+          "hours": 8,
+          "topics": [
+            "What is an Algorithm?",
+            "Fundamentals of Algorithmic Problem Solving",
+            "Analysis Framework",
+            "Asymptotic Notations (Big-Oh, Big-Omega, Big-Theta) and Basic efficiency classes",
+            "Mathematical analysis of Non-recursive algorithms",
+            "Mathematical analysis of Recursive algorithms",
+            "Brute Force Approaches: Selection Sort, Bubble Sort",
+            "Sequential Search and Brute Force String Matching"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1.1, 1.2, 2.1-2.4, 3.1, 3.2",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            53
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Divide-and-Conquer, Decrease-and-Conquer & Transform-and-Conquer",
+          "hours": 8,
+          "topics": [
+            "Divide and Conquer: Master Theorem, Merge Sort, Quick Sort",
+            "Matrix Multiplication using Strassen’s Algorithm",
+            "Decrease and Conquer: Insertion Sort",
+            "Topological Sorting (DFS-based and Source Removal)",
+            "Transform and Conquer: Presorting",
+            "Heaps and Heap Sort"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 4.1-4.3, 5.1-5.3, 6.1, 6.4",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            53,
+            54
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Dynamic Programming & Greedy Technique",
+          "hours": 8,
+          "topics": [
+            "Dynamic Programming: Computing a Binomial Coefficient",
+            "Warshall’s and Floyd’s Algorithms (Transitive Closure & All-Pairs Shortest Paths)",
+            "0/1 Knapsack Problem and Memory Functions",
+            "Greedy Technique: Prim’s Algorithm",
+            "Kruskal’s Algorithm",
+            "Dijkstra’s Algorithm",
+            "Huffman Trees and Data Compression Codes"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 8.1, 8.2, 8.4, 9.1-9.4",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            54
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Iterative Improvement & Limitations of Algorithm Power",
+          "hours": 8,
+          "topics": [
+            "Iterative Improvement: The Simplex Method",
+            "The Maximum-Flow Problem (Ford-Fulkerson)",
+            "Maximum Matching in Bipartite Graphs",
+            "Limitations of Algorithm Power: Lower-Bound Arguments",
+            "Decision Trees",
+            "P, NP, and NP-Complete Problems"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 10.1-10.3, 11.1-11.3",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            54
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Backtracking, Branch-and-Bound & Approximation Algorithms",
+          "hours": 8,
+          "topics": [
+            "Backtracking: n-Queens problem",
+            "Hamiltonian Circuit Problem",
+            "Subset-Sum Problem",
+            "Branch-and-Bound: Assignment Problem",
+            "Knapsack Problem using Branch-and-Bound",
+            "Traveling Salesperson Problem (TSP)",
+            "Approximation Algorithms for NP-Hard Problems (TSP, Knapsack)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 12.1-12.3",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            54,
+            55
+          ]
+        }
+      ],
+      "textbooks": [
+        "Anany Levitin, 'Introduction to the Design and Analysis of Algorithms', 3rd Edition, Pearson, 2012."
+      ],
+      "reference_books": [
+        "Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein, 'Introduction to Algorithms', 3rd Edition, MIT Press / PHI, 2009.",
+        "Ellis Horowitz, Satraj Sahni and Rajasekaran, 'Fundamentals of Computer Algorithms', 2nd Edition, Universities Press, 2014."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE"
+    },
+    {
+      "subject_id": "dsa",
+      "subject_name": "Data Structures and Applications",
+      "course_code": "BCS304",
+      "semester": 3,
+      "course_type": "Professional Core Course (PCC)",
+      "credits": 3,
+      "classification": "Core",
+      "teaching_hours_per_week": "3:0:0",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Introduction to Data Structures, Arrays & Strings",
+          "hours": 8,
+          "topics": [
+            "Data Structures Classifications (Primitive & Non-Primitive)",
+            "Data structure Operations",
+            "Review of pointers and dynamic memory allocation",
+            "Arrays: Dynamically Allocated Arrays",
+            "Structures and Unions",
+            "Polynomials representation and manipulation",
+            "Sparse Matrices",
+            "Representation of Multidimensional Arrays",
+            "Strings and Pattern Matching"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1.1-1.3, 2.1-2.7",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            14
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Stacks, Queues & Singly Linked Lists",
+          "hours": 8,
+          "topics": [
+            "Stacks and Stacks Using Dynamic Arrays",
+            "Evaluation of Expressions (Infix to Postfix, Postfix Evaluation)",
+            "Multiple Stacks",
+            "Queues, Circular Queues, Using Dynamic Arrays, Multiple Queues",
+            "Linked Lists: Singly Linked Lists and Chains",
+            "Representing Chains in C",
+            "Circular Linked Lists and Header Nodes"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 3.1-3.7, 4.1-4.4",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            14,
+            15
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Advanced Linked Lists & Trees",
+          "hours": 8,
+          "topics": [
+            "Doubly Linked Lists",
+            "Sparse Matrices using Linked Lists",
+            "Polynomial representation using Linked Lists",
+            "Trees: Introduction, Terminology, Binary Trees",
+            "Binary Tree Traversals (Inorder, Preorder, Postorder)",
+            "Additional Binary Tree Operations",
+            "Threaded Binary Trees"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 4.5, 4.8, 5.1-5.5",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            15
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Binary Search Trees, Disjoint Sets & Graphs",
+          "hours": 8,
+          "topics": [
+            "Binary Search Trees (BST): Insertion, Deletion, Searching",
+            "Selection Trees",
+            "Forests",
+            "Representation of Disjoint Sets",
+            "Counting Binary Trees",
+            "Graphs: Graph Abstract Data Type",
+            "Elementary Graph Operations: Breadth First Search (BFS), Depth First Search (DFS)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 5.6-5.10, 6.1-6.2",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            15
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Hashing & Priority Queues",
+          "hours": 8,
+          "topics": [
+            "Hashing: Introduction, Static Hashing",
+            "Hash Tables, Hash Functions",
+            "Collision Resolution: Linear Probing, Quadratic Probing, Double Hashing, Rehashing",
+            "Dynamic Hashing",
+            "Priority Queues: Single and double ended Priority Queues",
+            "Leftist Trees",
+            "Binomial Heaps, Fibonacci Heaps, Pairing Heaps"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 8.1-8.3, 9.1-9.5",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            15,
+            16
+          ]
+        }
+      ],
+      "textbooks": [
+        "Ellis Horowitz, Sartaj Sahni and Susan Anderson-Freed, 'Fundamentals of Data Structures in C', 2nd Edition, Universities Press, 2008."
+      ],
+      "reference_books": [
+        "Seymour Lipschutz, 'Data Structures Schaum's Outlines', Revised 1st Ed, McGraw Hill, 2014.",
+        "Richard F. Gilberg and Behrouz A. Forouzan, 'Data Structures: A Pseudocode Approach with C', 2nd Edition, Cengage Learning, 2005."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE"
+    },
+    {
+      "subject_id": "java",
+      "subject_name": "Object Oriented Programming with Java",
+      "course_code": "BCS306A",
+      "semester": 3,
+      "course_type": "Engineering Science / Programming Language Course (ESC/ETC/PLC)",
+      "credits": 3,
+      "classification": "Course Option",
+      "teaching_hours_per_week": "2:0:2",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Java Fundamentals, Operators & Control Statements",
+          "hours": 6,
+          "topics": [
+            "Object-Oriented Programming Principles",
+            "Java Environment, Compilation and Execution",
+            "Primitive Data Types, Integers, Floating-Point, Characters, Booleans",
+            "Literals, Variables, Type Conversion and Casting",
+            "Arrays and Strings introduction",
+            "Arithmetic, Bitwise, Relational, and Boolean Logical Operators",
+            "Operator Precedence",
+            "Control Statements: if-else, switch, while, do-while, for, break, continue"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 2, 3, 4, 5",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            20
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Classes, Objects, Methods & Constructors",
+          "hours": 6,
+          "topics": [
+            "Class Fundamentals, Declaring Objects, Assigning Object Reference Variables",
+            "Introducing Methods, Constructors",
+            "The 'this' Keyword, Garbage Collection",
+            "Method Overloading, Using Objects as Parameters",
+            "Argument Passing (Call-by-Value vs Call-by-Reference)",
+            "Returning Objects, Recursion",
+            "Access Control (public, private, protected, package)",
+            "Understanding static and final"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 6, 7",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            20,
+            21
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Inheritance, Polymorphism & Abstract Classes",
+          "hours": 6,
+          "topics": [
+            "Inheritance Basics, Superclass and Subclass",
+            "Using super to call constructors and hidden members",
+            "Multilevel Hierarchy",
+            "Constructor execution order in inheritance",
+            "Method Overriding",
+            "Dynamic Method Dispatch (Runtime Polymorphism)",
+            "Using Abstract Classes",
+            "Preventing inheritance with final",
+            "The Object Class and its methods"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 8",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            21
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Packages, Interfaces & Exception Handling",
+          "hours": 6,
+          "topics": [
+            "Packages, Package creation, Importing Packages",
+            "Packages and Member Access Rules",
+            "Interfaces: Defining, Implementing, and Variables in Interfaces",
+            "Extending Interfaces and Default Interface Methods",
+            "Exception-Handling Fundamentals: try and catch",
+            "Multiple catch Clauses, Nested try Statements",
+            "throw, throws, finally",
+            "Java Built-in Exceptions",
+            "Creating Custom User-Defined Exception Subclasses"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 9, 10",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            21
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Multithreaded Programming, Enumerations & Autoboxing",
+          "hours": 6,
+          "topics": [
+            "The Java Thread Model",
+            "The Main Thread",
+            "Creating Threads by Extending Thread and Implementing Runnable",
+            "Using isAlive() and join()",
+            "Thread Priorities",
+            "Thread Synchronization (synchronized blocks and methods)",
+            "Interthread Communication (wait, notify, notifyAll)",
+            "Suspending, Resuming, and Stopping Threads",
+            "Enumerations, Type Wrappers, Autoboxing and Auto-unboxing"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 11, 12",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            21,
+            22
+          ]
+        }
+      ],
+      "textbooks": [
+        "Herbert Schildt, 'Java: The Complete Reference', 12th Edition, McGraw-Hill, November 2021."
+      ],
+      "reference_books": [
+        "Cay S. Horstmann, 'Core Java Volume I - Fundamentals', 11th Edition, Prentice Hall, 2018."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_OPTION"
+    },
+    {
+      "subject_id": "python",
+      "subject_name": "Python Programming for Data Science",
+      "course_code": "BDS306B",
+      "semester": 3,
+      "course_type": "Engineering Science / Programming Language Course (ESC/ETC/PLC)",
+      "credits": 3,
+      "classification": "Course Option",
+      "teaching_hours_per_week": "2:0:2",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Python Basics, Flow Control & Functions",
+          "hours": 6,
+          "topics": [
+            "Entering Expressions into the Interactive Shell",
+            "Integer, Floating-Point, and String Data Types",
+            "String Concatenation and Replication",
+            "Variables and First Program dissection",
+            "Boolean Values, Comparison and Boolean Operators",
+            "Flow Control: if, else, elif, while, for, break, continue",
+            "Importing Modules and sys.exit()",
+            "Functions: def Statements, Parameters, Return Values, None Value",
+            "Keyword Arguments, Global vs Local Scopes, Exception Handling"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1, 2, 3",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            25
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Lists, Tuples, Dictionaries & Structuring Data",
+          "hours": 5,
+          "topics": [
+            "The List Data Type, Indexing, Slicing, List Length",
+            "Augmented Assignment Operators and List Methods",
+            "List-like Types: Strings and Tuples",
+            "References and copy.copy()",
+            "The Dictionary Data Type: Keys, Values, Items",
+            "Checking Key Existence with 'in' and 'not in'",
+            "get() and setdefault() Methods",
+            "Pretty Printing with pprint",
+            "Using Data Structures to Model Real-World Things"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 4, 5",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            25,
+            26
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "String Manipulation & Regular Expressions",
+          "hours": 5,
+          "topics": [
+            "Working with Strings, Escape Characters, Raw Strings",
+            "Multiline Strings with Triple Quotes, Indexing and Slicing Strings",
+            "Useful String Methods: upper(), lower(), isupper(), join(), split()",
+            "Pattern Matching with Regular Expressions: re Module",
+            "Regex Groups, Pipe, Optional Matching, Zero or More, One or More",
+            "Greedy vs Non-greedy Matching",
+            "The findall() Method, Character Classes, Caret and Dollar Sign Characters",
+            "Case-Insensitive Matching and sub() Method"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 6, 7",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            26
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "File I/O, Organizing Files & Debugging",
+          "hours": 6,
+          "topics": [
+            "Files and File Paths: os.path and pathlib",
+            "Reading and Writing Plaintext Files",
+            "Saving Variables with the shelve Module",
+            "Organizing Files with the shutil Module: Copying, Moving, Renaming, Deleting",
+            "Walking a Directory Tree with os.walk()",
+            "Compressing Files with zipfile Module",
+            "Debugging: Raising Exceptions, Getting Traceback",
+            "Assertions and assert Statements",
+            "Logging Configuration and Log Levels",
+            "IDLE’s Debugger"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 8, 9, 10",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            26
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Web Scraping, Working with Excel, PDF & Word Documents",
+          "hours": 6,
+          "topics": [
+            "Web Scraping: webbrowser Module, Downloading Files with requests",
+            "Parsing HTML with BeautifulSoup Object",
+            "Browser Automation with Selenium Module",
+            "Working with Excel Spreadsheets: openpyxl Module",
+            "Reading and Writing Excel Workbooks, Sheets, and Cells",
+            "Formulas and Charts in Excel",
+            "Working with PDF Documents: PyMuPDF / PyPDF2",
+            "Working with Word Documents: python-docx Module"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 11, 12, 13",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            26,
+            27
+          ]
+        }
+      ],
+      "textbooks": [
+        "Al Sweigart, 'Automate the Boring Stuff with Python', 1st/2nd Edition, No Starch Press, 2015.",
+        "S. Sridhar, J. Indumathi, V.M. Hariharan, 'Python Programming', Pearson, 2019."
+      ],
+      "reference_books": [
+        "Charles R. Severance, 'Python for Everybody: Exploring Data In Python 3', CreateSpace, 2016.",
+        "Allen B. Downey, 'Think Python: How to Think Like a Computer Scientist', 2nd Edition, Green Tea Press, 2015."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_OPTION"
+    },
+    {
+      "subject_id": "dbms",
+      "subject_name": "Database Management Systems",
+      "course_code": "BCS403",
+      "semester": 4,
+      "course_type": "Integrated Professional Core Course (IPCC)",
+      "credits": 4,
+      "classification": "Core",
+      "teaching_hours_per_week": "3:0:2",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Introduction to Databases & Conceptual Data Modeling (ER Model)",
+          "hours": 8,
+          "topics": [
+            "Characteristics of database approach",
+            "Advantages of using the DBMS approach",
+            "Data models, Schemas, and Instances",
+            "Three-schema architecture and data independence",
+            "Database languages and interfaces",
+            "The Database system environment and architectures",
+            "High level conceptual data models for database design",
+            "Entity types, Entity sets, Attributes and Keys",
+            "Relationship types, Relationship sets, Roles and Structural constraints",
+            "Weak entity types",
+            "ER diagrams, Naming conventions and Design issues"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1, 2, 3",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            61
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Relational Model, ER-to-Relational Mapping & Relational Algebra",
+          "hours": 8,
+          "topics": [
+            "Relational Model Concepts and Constraints (Domain, Key, Entity Integrity, Referential Integrity)",
+            "Update Operations, Transactions, and Dealing with Constraint Violations",
+            "Relational Database Design by ER-to-Relational Mapping Algorithm",
+            "Unary Relational Operations: SELECT and PROJECT",
+            "Relational Algebra Operations from Set Theory: UNION, INTERSECTION, DIFFERENCE, CARTESIAN PRODUCT",
+            "Binary Relational Operations: JOIN (Theta, Equi, Natural, Outer) and DIVISION",
+            "Examples of Queries in Relational Algebra"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 5, 9.1, 8.1-8.5",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            61,
+            62
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "SQL: Schema Definition, Constraints, Queries & Views",
+          "hours": 8,
+          "topics": [
+            "SQL data definition and data types",
+            "Specifying constraints in SQL (PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK, NOT NULL)",
+            "Basic retrieval queries in SQL (SELECT-FROM-WHERE)",
+            "Complex SQL retrieval queries (Nested queries, Correlated subqueries, EXISTS, IN, GROUP BY, HAVING)",
+            "INSERT, DELETE, and UPDATE statements in SQL",
+            "Views (Virtual Tables) in SQL and Schema update statements (ALTER, DROP)",
+            "Embedded SQL, Dynamic SQL, Database stored procedures and triggers"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 6, 7",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            62
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Database Design Theory & Normalization",
+          "hours": 8,
+          "topics": [
+            "Informal design guidelines for relation schemas",
+            "Functional Dependencies: Definition, Inference Rules (Armstrong's Axioms), Minimal Cover",
+            "Normal Forms Based on Primary Keys: First Normal Form (1NF), Second Normal Form (2NF), Third Normal Form (3NF)",
+            "General Definitions of 2NF and 3NF",
+            "Boyce-Codd Normal Form (BCNF)",
+            "Multi-valued Dependency and Fourth Normal Form (4NF)",
+            "Join Dependencies and Fifth Normal Form (5NF)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 14, 15",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            62
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Transaction Processing, Concurrency Control & Recovery",
+          "hours": 8,
+          "topics": [
+            "Introduction to Transaction Processing, Transaction and System Concepts",
+            "Desirable Properties of Transactions (ACID)",
+            "Characterizing Schedules Based on Recoverability and Serializability (Conflict vs View)",
+            "Concurrency Control Techniques: Two-Phase Locking (2PL, Strict 2PL, Rigorous 2PL)",
+            "Concurrency Control Based on Timestamp Ordering",
+            "Multiversion Concurrency Control Techniques",
+            "Validation (Optimistic) Concurrency Control Techniques",
+            "Database Recovery Concepts: NO-UNDO/UNDO/REDO Recovery Algorithms",
+            "Deferred Update vs Immediate Update, Shadow Paging, The ARIES Recovery Algorithm"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 20, 21, 22",
+          "source_pdf": "3rd–4th semester syllabus.pdf",
+          "source_pages": [
+            62,
+            63
+          ]
+        }
+      ],
+      "textbooks": [
+        "Ramez Elmasri and Shamkant B. Navathe, 'Fundamentals of Database Systems', 7th Edition, Pearson, 2016."
+      ],
+      "reference_books": [
+        "Abraham Silberschatz, Henry F. Korth, S. Sudarshan, 'Database System Concepts', 6th/7th Edition, McGraw Hill, 2019.",
+        "Raghu Ramakrishnan and Johannes Gehrke, 'Database Management Systems', 3rd Edition, McGraw Hill, 2003."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE"
+    },
+    {
+      "subject_id": "parallel_computing",
+      "subject_name": "Parallel Computing",
+      "course_code": "BCI714B",
+      "semester": 7,
+      "course_type": "Professional Elective Course (PEC)",
+      "credits": 3,
+      "classification": "Professional Elective",
+      "teaching_hours_per_week": "3:0:0",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Introduction & Parallel Programming Platforms",
+          "hours": 8,
+          "topics": [
+            "Why Parallel Computing? Scope and Motivating Parallelism",
+            "Implicit Parallelism: Microprocessor Architectures and Limitations of Memory Performance",
+            "Dichotomy of Parallel Computing Platforms",
+            "Physical Organization of Parallel Platforms (Shared Memory, Distributed Memory, NUMA)",
+            "Interconnection Networks and Communication Costs in Parallel Machines",
+            "Routing Mechanisms for Interconnection Networks"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1, 2",
+          "source_pdf": "7th-semester electives.pdf",
+          "source_pages": [
+            5
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Principles of Parallel Algorithm Design",
+          "hours": 8,
+          "topics": [
+            "Decomposition Techniques (Recursive, Data, Exploratory, Speculative)",
+            "Characteristics of Tasks and Interactions",
+            "Mapping Techniques for Load Balancing (Static vs Dynamic Mapping)",
+            "Methods for Containing Interaction Overheads",
+            "Parallel Algorithm Models (Data-Parallel, Task-Graph, Work-Pool, Master-Slave, Pipeline)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 3",
+          "source_pdf": "7th-semester electives.pdf",
+          "source_pages": [
+            5,
+            6
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Basic Communication Operations in Parallel Systems",
+          "hours": 8,
+          "topics": [
+            "One-to-All Broadcast and All-to-One Reduction",
+            "All-to-All Broadcast and Reduction",
+            "All-Reduce and Prefix-Sum Operations",
+            "Scatter and Gather Operations",
+            "All-to-All Personalized Communication",
+            "Circular Shift and Performance Analysis"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 4",
+          "source_pdf": "7th-semester electives.pdf",
+          "source_pages": [
+            6
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Programming with OpenMP & Message-Passing (MPI)",
+          "hours": 8,
+          "topics": [
+            "OpenMP Programming Model: Specifying Concurrent Tasks",
+            "Synchronization Constructs in OpenMP (critical, atomic, barrier)",
+            "Data Handling in OpenMP (private, shared, default)",
+            "OpenMP Library Functions and Environment Variables",
+            "Programming Message-Passing Systems with MPI: Building Blocks (MPI_Send, MPI_Recv)",
+            "Topologies and Embedding in MPI",
+            "Overlapping Communication with Computation",
+            "Collective Communication and Computation Operations in MPI"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 7, 6",
+          "source_pdf": "7th-semester electives.pdf",
+          "source_pages": [
+            6
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "GPU Programming with CUDA",
+          "hours": 8,
+          "topics": [
+            "GPUs and GPGPU architectures, Heterogeneous Computing",
+            "CUDA Programming Model: Threads, Blocks, and Grids",
+            "Nvidia Compute Capabilities and Device Architectures",
+            "Vector Addition Kernel in CUDA",
+            "Returning Results from CUDA Kernels",
+            "CUDA Trapezoidal Rule I and II: Improving Memory Accesses",
+            "Shared Memory, Syncthreads, and Thread Divergence"
+          ],
+          "textbook_mapping": "Textbook 2: Ch 1, 2, 3",
+          "source_pdf": "7th-semester electives.pdf",
+          "source_pages": [
+            6
+          ]
+        }
+      ],
+      "textbooks": [
+        "Ananth Grama, Anshul Gupta, George Karypis, Vipin Kumar, 'Introduction to Parallel Computing', 2nd Edition, Pearson, 2003.",
+        "Peter S. Pacheco, 'An Introduction to Parallel Programming', Morgan Kaufmann, 2011."
+      ],
+      "reference_books": [
+        "Michael J. Quinn, 'Parallel Programming in C with MPI and OpenMP', McGraw-Hill, 2004.",
+        "David B. Kirk and Wen-mei W. Hwu, 'Programming Massively Parallel Processors: A Hands-on Approach', 3rd Edition, Morgan Kaufmann, 2016."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_ELECTIVE"
+    },
+    {
+      "subject_id": "rpa",
+      "subject_name": "Robotic Process Automation",
+      "course_code": "UNVERIFIED_RPA",
+      "semester": null,
+      "course_type": "Supplementary / Unverified Elective",
+      "credits": null,
+      "classification": "Supplementary",
+      "teaching_hours_per_week": "N/A",
+      "exam_duration_hours": null,
+      "cie_marks": null,
+      "see_marks": null,
+      "total_marks": null,
+      "modules": [],
+      "textbooks": [
+        "Alok Mani Tripathi, 'Learning Robotic Process Automation', Packt Publishing, 2018 (Standard Recommended Industry Reference)."
+      ],
+      "reference_books": [
+        "Frank Casale, 'Introduction to Robotic Process Automation', The Institute for Robotic Process Automation (IRPA), 2015."
+      ],
+      "verification_status": "SUPPLEMENTARY_UNVERIFIED",
+      "verification_note": "Subject was requested by user but is NOT present in the official VTU 2022 Scheme for Artificial Intelligence & Machine Learning (verified across all 236 pages of downloaded official syllabus PDFs)."
+    },
+    {
+      "subject_id": "cryptography",
+      "subject_name": "Cryptography & Network Security",
+      "course_code": "BCS703",
+      "semester": 7,
+      "course_type": "Professional Core Course (PCC)",
+      "credits": 4,
+      "classification": "Core",
+      "teaching_hours_per_week": "4:0:0",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Classical Encryption Techniques & Block Ciphers (DES)",
+          "hours": 10,
+          "topics": [
+            "Symmetric Cipher Model, Cryptography, Cryptanalysis and Brute-Force Attack",
+            "Substitution Techniques: Caesar Cipher, Monoalphabetic Ciphers, Playfair Cipher, Hill Cipher, Polyalphabetic Ciphers, One-Time Pad",
+            "Transposition Techniques, Rotor Machines",
+            "Traditional Block Cipher Structure (Feistel Cipher)",
+            "The Data Encryption Standard (DES), A DES Example, The Strength of DES",
+            "Block Cipher Design Principles"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 2, 3",
+          "source_pdf": "7th semester syllabus.pdf",
+          "source_pages": [
+            9
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Advanced Encryption Standard (AES) & Block Cipher Operations",
+          "hours": 10,
+          "topics": [
+            "Finite Field Arithmetic in GF(2^8)",
+            "AES Structure, AES Transformation Functions (SubBytes, ShiftRows, MixColumns, AddRoundKey)",
+            "AES Key Expansion, An AES Example, AES Implementation",
+            "Multiple Encryption and Triple DES",
+            "Block Cipher Modes of Operation: Electronic Codebook (ECB), Cipher Block Chaining (CBC), Cipher Feedback (CFB), Output Feedback (OFB), Counter (CTR), XTS-AES"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 5, 6",
+          "source_pdf": "7th semester syllabus.pdf",
+          "source_pages": [
+            9,
+            10
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Pseudorandom Numbers, Stream Ciphers & Public-Key Cryptography (RSA)",
+          "hours": 10,
+          "topics": [
+            "Principles of Pseudorandom Number Generation",
+            "Pseudorandom Number Generators: Linear Congruential Generators, Blum Blum Shub Generator",
+            "Stream Ciphers and RC4",
+            "Principles of Public-Key Cryptosystems",
+            "The RSA Algorithm (Key Generation, Encryption, Decryption, Security)",
+            "Diffie-Hellman Key Exchange",
+            "Elgamal Cryptographic System",
+            "Elliptic Curve Arithmetic and Elliptic Curve Cryptography (ECC)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 7, 9, 10",
+          "source_pdf": "7th semester syllabus.pdf",
+          "source_pages": [
+            10
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Cryptographic Hash Functions, MACs & Digital Signatures",
+          "hours": 10,
+          "topics": [
+            "Applications of Cryptographic Hash Functions, Requirements and Security",
+            "Hash Functions Based on Cipher Block Chaining",
+            "Secure Hash Algorithm (SHA-512), SHA-3",
+            "Message Authentication Codes (MAC): Requirements, HMAC, CMAC, DAA",
+            "Digital Signatures: Process and Services",
+            "NIST Digital Signature Algorithm (DSA)",
+            "Elliptic Curve Digital Signature Algorithm (ECDSA)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 11, 12, 13",
+          "source_pdf": "7th semester syllabus.pdf",
+          "source_pages": [
+            10
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Key Management, User Authentication & Transport-Level Security",
+          "hours": 10,
+          "topics": [
+            "Symmetric Key Distribution Using Symmetric Encryption",
+            "Symmetric Key Distribution Using Asymmetric Encryption",
+            "Distribution of Public Keys, X.509 Certificates, Public-Key Infrastructure (PKI)",
+            "Remote User-Authentication Principles and Kerberos",
+            "Federated Identity Management",
+            "Web Security Considerations",
+            "Transport Layer Security (TLS) Architecture and Record Protocol",
+            "HTTPS and Secure Shell (SSH)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 14, 15, 17",
+          "source_pdf": "7th semester syllabus.pdf",
+          "source_pages": [
+            10,
+            11
+          ]
+        }
+      ],
+      "textbooks": [
+        "William Stallings, 'Cryptography and Network Security: Principles and Practice', 7th/8th Edition, Pearson, 2017/2020."
+      ],
+      "reference_books": [
+        "Behrouz A. Forouzan and Debdeep Mukhopadhyay, 'Cryptography and Network Security', 2nd Edition, McGraw Hill, 2011.",
+        "Atul Kahate, 'Cryptography and Network Security', 3rd Edition, Tata McGraw-Hill, 2013."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE"
+    },
+    {
+      "subject_id": "cloud_computing",
+      "subject_name": "Cloud Computing & Security",
+      "course_code": "BIS613D",
+      "semester": 6,
+      "course_type": "Professional Elective Course (PEC)",
+      "credits": 3,
+      "classification": "Professional Elective",
+      "teaching_hours_per_week": "3:0:0",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Introduction to Cloud Computing & Open Source Platforms",
+          "hours": 8,
+          "topics": [
+            "Defining Cloud Computing: The NIST Model, The Cloud Cube Model",
+            "Deployment Models (Public, Private, Hybrid, Community)",
+            "Service Models (IaaS, PaaS, SaaS)",
+            "Examining Characteristics: Paradigm Shift, Benefits and Disadvantages",
+            "Role of Open Source Software in Cloud Computing",
+            "Open Source Platforms and Infrastructure Support"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1, 2, 3",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            15
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Cloud Services, Applications by Type & SOA",
+          "hours": 8,
+          "topics": [
+            "Defining Infrastructure as a Service (IaaS): IaaS Workloads, Pods, Aggregation, Silos",
+            "Defining Platform as a Service (PaaS): Application Frameworks",
+            "Defining Software as a Service (SaaS): SaaS Characteristics, Open SaaS",
+            "Understanding Service Oriented Architecture (SOA): Event-Driven SOA, Enterprise Service Bus (ESB), Service Catalog"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 4, 5, 6, 7",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            15,
+            16
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Cloud Virtualization Technologies",
+          "hours": 8,
+          "topics": [
+            "Virtualization Definition and Characteristics of Virtualized Environments",
+            "Taxonomy of Virtualization Techniques (Full, Paravirtualization, Hardware-Assisted, OS-level)",
+            "Virtualization and Cloud Computing",
+            "Pros and Cons of Virtualization",
+            "Technology Examples: Xen, VMware, Microsoft Hyper-V, KVM"
+          ],
+          "textbook_mapping": "Textbook 2: Ch 5",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            16
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Cloud Hardware, Infrastructure & Public Cloud Platforms",
+          "hours": 8,
+          "topics": [
+            "Cloud Hardware and Infrastructure: Clients, Security, Network, Services",
+            "Cloud Storage: Storage Provisioning, Overcommitment, Interoperability",
+            "Distributed File Systems (HDFS, GFS)",
+            "Public Cloud Platforms: Google App Engine (GAE), Amazon Web Services (AWS EC2, S3), Microsoft Azure",
+            "Inter-Cloud Resource Management"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 8, 9; Textbook 2: Ch 4",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            16
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Cloud Security, IAM & Operations",
+          "hours": 8,
+          "topics": [
+            "Securing the Cloud: Security Boundary, Security Service Boundary, Security Mapping",
+            "Data Security: Data Control, Brokered Cloud Storage Access, Storage Location and Tenancy, Encryption",
+            "Auditing and Compliance",
+            "Identity and Access Management (IAM): Authentication, Authorization, Single Sign-On (SSO), Identity Federation",
+            "Operating the Cloud: Service Level Agreements (SLAs), Disaster Recovery, Business Continuity"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 12, 13, 14, 15",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            16,
+            17
+          ]
+        }
+      ],
+      "textbooks": [
+        "Barrie Sosinsky, 'Cloud Computing Bible', Wiley Publishing, Inc., 2011.",
+        "Rajkumar Buyya, Christian Vecchiola, S. Thamarai Selvi, 'Mastering Cloud Computing', McGraw Hill Education, 2013."
+      ],
+      "reference_books": [
+        "Anthony T. Velte, Toby J. Velte, Robert Elsenpeter, 'Cloud Computing: A Practical Approach', McGraw Hill, 2010.",
+        "Ronald L. Krutz, Russell Dean Vines, 'Cloud Security: A Comprehensive Guide to Secure Cloud Computing', Wiley, 2010."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_ELECTIVE"
+    },
+    {
+      "subject_id": "generative_ai",
+      "subject_name": "Generative AI",
+      "course_code": "BAIL657C",
+      "semester": 6,
+      "course_type": "Ability Enhancement Course / Skill Enhancement Course (AEC/SEC)",
+      "credits": 1,
+      "classification": "Enhancement Course",
+      "teaching_hours_per_week": "0:0:1:0",
+      "exam_duration_hours": 2,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Pre-trained Word Vectors & Vector Arithmetic",
+          "hours": 4,
+          "topics": [
+            "Explore pre-trained word vectors (Word2Vec, GloVe)",
+            "Word relationships using vector arithmetic (king - man + woman = queen)",
+            "Perform arithmetic operations on embedding representations and analyze results",
+            "Dimensionality reduction using PCA or t-SNE to visualize word clusters",
+            "Select domain-specific words (sports, technology) and analyze cluster semantic relationships",
+            "Generate semantically similar words for given inputs using cosine similarity"
+          ],
+          "textbook_mapping": "Lab Experiment 1 & 2",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            51
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Custom Word2Vec Models & Prompt Enrichment",
+          "hours": 4,
+          "topics": [
+            "Train custom Word2Vec model (Skip-gram, CBOW) on domain-specific corpus (legal, medical)",
+            "Analyze how domain embeddings capture specialized semantic relationships",
+            "Use word embeddings to enrich GenAI prompts",
+            "Retrieve semantically similar words and construct enhanced prompt structures",
+            "Compare model outputs between original and enriched prompts for detail, depth, and relevance"
+          ],
+          "textbook_mapping": "Lab Experiment 3 & 4",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            51
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Vector Embeddings for Creative Writing & Story Generation",
+          "hours": 4,
+          "topics": [
+            "Use word embeddings to create meaningful sentences for creative text generation",
+            "Retrieve semantic neighborhood for a seed word",
+            "Construct coherent stories and short paragraphs using embedding-guided word trajectories"
+          ],
+          "textbook_mapping": "Lab Experiment 5",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            51
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Pre-trained Hugging Face Pipelines (Sentiment & Summarization)",
+          "hours": 4,
+          "topics": [
+            "Use pre-trained Hugging Face transformers pipeline for text sentiment analysis",
+            "Evaluate sentiment classification across customer reviews and operational datasets",
+            "Summarize long documents using pre-trained summarization transformer models (BART, T5)",
+            "Extract abstractive and extractive summaries from complex technical text"
+          ],
+          "textbook_mapping": "Lab Experiment 6 & 7",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            51
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Large Language Model Application Frameworks, LangChain & IPC RAG Chatbot",
+          "hours": 4,
+          "topics": [
+            "Install and configure LangChain, Cohere API, and langchain-community",
+            "Document loading, text splitting, and custom prompt templates",
+            "Structured output parsing using Pydantic schemas",
+            "Wikipedia entity extraction chain with validated data models",
+            "Build an Indian Penal Code (IPC) Retrieval-Augmented Generation (RAG) Chatbot",
+            "Ingest official legal documents, generate chunk embeddings, and build interactive conversational Q&A system"
+          ],
+          "textbook_mapping": "Lab Experiment 8, 9, 10",
+          "source_pdf": "6th semester syllabus.pdf",
+          "source_pages": [
+            51
+          ]
+        }
+      ],
+      "textbooks": [
+        "Valentina Alto, 'Modern Generative AI with ChatGPT and OpenAI Models: Leverage the Capabilities of OpenAI's LLM for Productivity and Innovation with GPT3 and GPT4', Packt Publishing Ltd, 2023.",
+        "Paul Singh, Anurag Karuparti, 'Generative AI for Cloud Solutions: Architect modern AI LLMs in secure, scalable, and ethical cloud environments', Packt Publishing Ltd, 2024."
+      ],
+      "reference_books": [
+        "Official W3Schools Generative AI Tutorials (https://www.w3schools.com/gen_ai/index.php).",
+        "LangChain Documentation and Official Video Series."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_AEC"
+    },
+    {
+      "subject_id": "computer_graphics",
+      "subject_name": "Computer Graphics",
+      "course_code": "UNVERIFIED_CG",
+      "semester": null,
+      "course_type": "Supplementary / Unverified Elective",
+      "credits": null,
+      "classification": "Supplementary",
+      "teaching_hours_per_week": "N/A",
+      "exam_duration_hours": null,
+      "cie_marks": null,
+      "see_marks": null,
+      "total_marks": null,
+      "modules": [],
+      "textbooks": [
+        "Donald Hearn & M. Pauline Baker, 'Computer Graphics with OpenGL', 3rd/4th Edition, Pearson Education, 2011 (Standard VTU 2018 CSE Reference)."
+      ],
+      "reference_books": [
+        "Edward Angel, 'Interactive Computer Graphics: A Top-Down Approach with Shader-Based OpenGL', 6th Edition, Pearson, 2012."
+      ],
+      "verification_status": "SUPPLEMENTARY_UNVERIFIED",
+      "verification_note": "Subject was requested by user but is NOT present in the official VTU 2022 Scheme for Artificial Intelligence & Machine Learning (present in older 2018 CSE scheme 18CS62, but replaced by AIML specializations in 2022)."
+    },
+    {
+      "subject_id": "software_engineering",
+      "subject_name": "Software Engineering & Project Management",
+      "course_code": "BCS501",
+      "semester": 5,
+      "course_type": "Professional Core Course (PCC)",
+      "credits": 3,
+      "classification": "Core",
+      "teaching_hours_per_week": "3:0:0",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Software and Software Engineering & Process Models",
+          "hours": 10,
+          "topics": [
+            "The nature of Software, The unique nature of WebApps",
+            "Software Engineering, The Software Process, Software Engineering Practice, Software Myths",
+            "Process Models: A Generic Process Model",
+            "Process Assessment and Improvement",
+            "Prescriptive Process Models (Waterfall, Incremental, Evolutionary, Concurrent)",
+            "Specialized Process Models, The Unified Process",
+            "Personal and Team Process Models"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1, 2",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            1
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Understanding Requirements & Requirements Modeling",
+          "hours": 12,
+          "topics": [
+            "Requirements Engineering: Establishing the groundwork",
+            "Eliciting Requirements, Developing use cases",
+            "Building the requirements model, Negotiating requirements, Validating requirements",
+            "Requirements Modeling: Requirements Analysis",
+            "Scenario-Based Modeling, UML Models that Supplement the Use Case",
+            "Data Modeling Concepts, Class-Based Modeling"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 5, 6",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            1,
+            2
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Agile Development & Extreme Programming",
+          "hours": 10,
+          "topics": [
+            "What is Agility?, Agility and the cost of change",
+            "What is an agile Process?, Extreme Programming (XP)",
+            "Other Agile Process Models: Adaptive Software Development (ASD)",
+            "Scrum: Roles, Artifacts, Sprints, Ceremonies",
+            "Dynamic Systems Development Method (DSDM)",
+            "Crystal, Feature Driven Development (FDD)",
+            "Lean Software Development (LSD), Agile Modeling (AM), Agile Unified Process (AUP)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 3",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            2
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Introduction to Software Project Management & Evaluation",
+          "hours": 10,
+          "topics": [
+            "Introduction to Project Management, Project and Importance of Project Management",
+            "Contract Management, Activities Covered by Software Project Management",
+            "Plans, Methods and Methodologies, Categorizing software projects",
+            "Stakeholders, Setting objectives, The Business Case, Project Success and Failure",
+            "What is Management? Management Control, Project portfolio management",
+            "Evaluation of individual projects, Cost-benefit evaluation techniques (NPV, ROI, Payback)",
+            "Risk evaluation"
+          ],
+          "textbook_mapping": "Textbook 2: Ch 1, 2",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            2
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Software Quality, Metrics & Standards",
+          "hours": 10,
+          "topics": [
+            "The place of software quality in project planning, Importance of software quality",
+            "Defining software quality, Software quality measures, ISO 9126 Quality Attributes",
+            "Product and Process metrics",
+            "Quality management systems",
+            "Process capability models (CMMI levels 1-5)",
+            "Techniques to help enhance software quality (Inspections, Reviews)",
+            "Software reliability and testing measures"
+          ],
+          "textbook_mapping": "Textbook 2: Ch 13",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            2
+          ]
+        }
+      ],
+      "textbooks": [
+        "Roger S. Pressman, Bruce R. Maxim, 'Software Engineering: A Practitioner's Approach', 8th/9th Edition, McGraw-Hill, 2015/2020.",
+        "Bob Hughes, Mike Cotterell, Rajib Mall, 'Software Project Management', 6th Edition, McGraw Hill Education, 2018."
+      ],
+      "reference_books": [
+        "Ian Sommerville, 'Software Engineering', 10th Edition, Pearson Education, 2016.",
+        "Pankaj Jalote, 'An Integrated Approach to Software Engineering', 3rd Edition, Narosa Publishing House, 2005."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE_COMBINED"
+    },
+    {
+      "subject_id": "project_management",
+      "subject_name": "Software Engineering & Project Management",
+      "course_code": "BCS501",
+      "semester": 5,
+      "course_type": "Professional Core Course (PCC)",
+      "credits": 3,
+      "classification": "Core",
+      "teaching_hours_per_week": "3:0:0",
+      "exam_duration_hours": 3,
+      "cie_marks": 50,
+      "see_marks": 50,
+      "total_marks": 100,
+      "modules": [
+        {
+          "module_number": 1,
+          "module_title": "Software and Software Engineering & Process Models",
+          "hours": 10,
+          "topics": [
+            "The nature of Software, The unique nature of WebApps",
+            "Software Engineering, The Software Process, Software Engineering Practice, Software Myths",
+            "Process Models: A Generic Process Model",
+            "Process Assessment and Improvement",
+            "Prescriptive Process Models (Waterfall, Incremental, Evolutionary, Concurrent)",
+            "Specialized Process Models, The Unified Process",
+            "Personal and Team Process Models"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 1, 2",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            1
+          ]
+        },
+        {
+          "module_number": 2,
+          "module_title": "Understanding Requirements & Requirements Modeling",
+          "hours": 12,
+          "topics": [
+            "Requirements Engineering: Establishing the groundwork",
+            "Eliciting Requirements, Developing use cases",
+            "Building the requirements model, Negotiating requirements, Validating requirements",
+            "Requirements Modeling: Requirements Analysis",
+            "Scenario-Based Modeling, UML Models that Supplement the Use Case",
+            "Data Modeling Concepts, Class-Based Modeling"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 5, 6",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            1,
+            2
+          ]
+        },
+        {
+          "module_number": 3,
+          "module_title": "Agile Development & Extreme Programming",
+          "hours": 10,
+          "topics": [
+            "What is Agility?, Agility and the cost of change",
+            "What is an agile Process?, Extreme Programming (XP)",
+            "Other Agile Process Models: Adaptive Software Development (ASD)",
+            "Scrum: Roles, Artifacts, Sprints, Ceremonies",
+            "Dynamic Systems Development Method (DSDM)",
+            "Crystal, Feature Driven Development (FDD)",
+            "Lean Software Development (LSD), Agile Modeling (AM), Agile Unified Process (AUP)"
+          ],
+          "textbook_mapping": "Textbook 1: Ch 3",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            2
+          ]
+        },
+        {
+          "module_number": 4,
+          "module_title": "Introduction to Software Project Management & Evaluation",
+          "hours": 10,
+          "topics": [
+            "Introduction to Project Management, Project and Importance of Project Management",
+            "Contract Management, Activities Covered by Software Project Management",
+            "Plans, Methods and Methodologies, Categorizing software projects",
+            "Stakeholders, Setting objectives, The Business Case, Project Success and Failure",
+            "What is Management? Management Control, Project portfolio management",
+            "Evaluation of individual projects, Cost-benefit evaluation techniques (NPV, ROI, Payback)",
+            "Risk evaluation"
+          ],
+          "textbook_mapping": "Textbook 2: Ch 1, 2",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            2
+          ]
+        },
+        {
+          "module_number": 5,
+          "module_title": "Software Quality, Metrics & Standards",
+          "hours": 10,
+          "topics": [
+            "The place of software quality in project planning, Importance of software quality",
+            "Defining software quality, Software quality measures, ISO 9126 Quality Attributes",
+            "Product and Process metrics",
+            "Quality management systems",
+            "Process capability models (CMMI levels 1-5)",
+            "Techniques to help enhance software quality (Inspections, Reviews)",
+            "Software reliability and testing measures"
+          ],
+          "textbook_mapping": "Textbook 2: Ch 13",
+          "source_pdf": "5th semester syllabus.pdf",
+          "source_pages": [
+            2
+          ]
+        }
+      ],
+      "textbooks": [
+        "Roger S. Pressman, Bruce R. Maxim, 'Software Engineering: A Practitioner's Approach', 8th/9th Edition, McGraw-Hill, 2015/2020.",
+        "Bob Hughes, Mike Cotterell, Rajib Mall, 'Software Project Management', 6th Edition, McGraw Hill Education, 2018."
+      ],
+      "reference_books": [
+        "Ian Sommerville, 'Software Engineering', 10th Edition, Pearson Education, 2016.",
+        "BCSL358C Project Management with Git (VTU 2022 3rd Sem AEC, Page 45)."
+      ],
+      "verification_status": "VERIFIED_OFFICIAL_CORE_COMBINED",
+      "combined_mapping_note": "Combined with Software Engineering under official course code BCS501. Linked to the same verified curriculum record without artificial duplication."
+    }
+  ]
+}

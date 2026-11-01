@@ -1,4 +1,5 @@
 "use client";
+import { API } from "@/lib/api";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -18,159 +19,100 @@ import {
   Pause,
   Square,
   RefreshCw,
-  Plus,
+  BookOpen,
+  Globe,
+  Sparkles,
 } from "lucide-react";
-import { demoOverview, demoTrends } from "../demo-data";
 import { Navbar } from "../navbar";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
+import {
+  useProgressOverview,
+  useProgressTrends,
+  useTopicMastery,
+  useInvalidateAnalytics,
+} from "@/hooks/useProgress";
 
-type Overview = {
-  totalStudyMinutes: number;
-  totalStudySeconds?: number;
-  isFocusingNow?: boolean;
-  activeSessionSeconds?: number;
-  activeSessionStatus?: string;
-  activeSessionId?: number;
-  completedTasks: number;
-  totalTasks: number;
-  taskCompletionPercent: number;
-  quizAttempts: number;
-  quizAccuracyPercent: number;
-};
-
-type Trend = {
-  studyMinutes: { date: string; minutes: number; seconds?: number }[];
-  taskCompletions: { date: string; completed: number }[];
-  quizAccuracy: { date: string; percent?: number; questions?: number }[];
-};
-
-type Quiz = {
-  id: number;
-  title: string;
-  topic?: string;
-  scorePercent: number | null;
-  questionCount: number;
-  createdAt: string;
-};
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+// Using centralized API endpoint from @/lib/api
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const [overview, setOverview] = useState<Overview | null>(null);
-  const [trend, setTrend] = useState<Trend | null>(null);
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [error, setError] = useState<string>("");
-  const [demoMode, setDemoMode] = useState<boolean>(false);
+  const invalidateAnalytics = useInvalidateAnalytics();
+
+  const {
+    data: overview,
+    isFetching: isOverviewFetching,
+    isError: isOverviewError,
+    error: overviewError,
+    refetch: refetchOverview,
+    dataUpdatedAt: overviewUpdatedAt,
+  } = useProgressOverview();
+
+  const {
+    data: trend,
+    isFetching: isTrendFetching,
+    isError: isTrendError,
+    error: trendError,
+    refetch: refetchTrends,
+  } = useProgressTrends();
+
+  const {
+    data: topicMasteryList = [],
+    isFetching: isTopicsFetching,
+    isError: isTopicsError,
+    refetch: refetchTopics,
+  } = useTopicMastery();
+
   const [activeTooltipDay, setActiveTooltipDay] = useState<string | null>(null);
   const [hideEmptyDays, setHideEmptyDays] = useState<boolean>(true);
+  const [topicCategoryFilter, setTopicCategoryFilter] = useState<"ALL" | "ACADEMIC" | "RESEARCH">("ALL");
   const [actionBusy, setActionBusy] = useState<boolean>(false);
-  const [lastSynced, setLastSynced] = useState<Date>(new Date());
+  const [actionError, setActionError] = useState<string>("");
 
-  const load = useCallback(async () => {
-    try {
-      const [overviewRes, trendRes, quizzesRes] = await Promise.all([
-        fetch(`${API}/progress/overview`, { credentials: "include" }),
-        fetch(`${API}/progress/trends`, { credentials: "include" }),
-        fetch(`${API}/quizzes`, { credentials: "include" }),
-      ]);
-      if (overviewRes.status === 401) {
-        router.push("/login");
-        return;
-      }
-      if (!overviewRes.ok || !trendRes.ok) {
-        throw new Error("Could not load progress data.");
-      }
-      const ov = (await overviewRes.json()) as Overview;
-      const tr = (await trendRes.json()) as Trend;
-      setOverview(ov);
-      setTrend(tr);
-      setLastSynced(new Date());
-
-      if (quizzesRes.ok) {
-        const qz = (await quizzesRes.json()) as Quiz[];
-        setQuizzes(qz);
-      }
-    } catch {
-      setDemoMode(true);
-      setOverview(demoOverview);
-      setTrend(demoTrends);
-      setQuizzes([
-        {
-          id: 1,
-          title: "Cellular Respiration & ATP",
-          topic: "Cell Biology",
-          scorePercent: 85,
-          questionCount: 5,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          title: "Linear Equations & Matrices",
-          topic: "Algebra",
-          scorePercent: 55,
-          questionCount: 5,
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-      ]);
-    }
-  }, [router]);
-
-  // Regular periodic sync every 3 seconds
+  // Cross-component and cross-tab mutation event listeners
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void load();
-    }, 0);
-    const interval = setInterval(() => {
-      void load();
-    }, 3000);
+    const handleMutationEvent = () => {
+      void refetchOverview();
+      void refetchTrends();
+      void refetchTopics();
+    };
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === "smartstudy:last_mutation") {
+        void refetchOverview();
+        void refetchTrends();
+        void refetchTopics();
+      }
+    };
+
+    window.addEventListener("smartstudy:mutation", handleMutationEvent);
+    window.addEventListener("storage", handleStorageEvent);
+
     return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
+      window.removeEventListener("smartstudy:mutation", handleMutationEvent);
+      window.removeEventListener("storage", handleStorageEvent);
     };
-  }, [load]);
+  }, [refetchOverview, refetchTrends, refetchTopics]);
 
-  // Window visibility & focus sync
-  useEffect(() => {
-    const handleFocus = () => {
-      if (document.visibilityState === "visible") {
-        void load();
-      }
-    };
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleFocus);
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleFocus);
-    };
-  }, [load]);
+  const activeElapsedSeconds = overview?.activeSessionSeconds ?? 0;
 
-  // 1-second smooth ticker when session is actively focusing
-  useEffect(() => {
-    if (!overview?.isFocusingNow) return;
-    const ticker = setInterval(() => {
-      setOverview((prev) => {
-        if (!prev || !prev.isFocusingNow) return prev;
-        const curActive = prev.activeSessionSeconds ?? 0;
-        const curTotalSecs = prev.totalStudySeconds ?? (prev.totalStudyMinutes * 60);
-        const nextActive = curActive + 1;
-        const nextTotalSecs = curTotalSecs + 1;
-        return {
-          ...prev,
-          activeSessionSeconds: nextActive,
-          totalStudySeconds: nextTotalSecs,
-          totalStudyMinutes: Math.floor(nextTotalSecs / 60),
-        };
-      });
-    }, 1000);
-    return () => clearInterval(ticker);
-  }, [overview?.isFocusingNow]);
+  const totalStudyMinutesCalculated = useMemo(() => {
+    if (!overview) return 0;
+    const baseSecs = overview.verifiedStudySeconds ?? (overview.totalStudyMinutes * 60);
+    const totalSecs = baseSecs + activeElapsedSeconds;
+    return totalSecs > 0 && totalSecs < 60 ? 1 : Math.floor(totalSecs / 60);
+  }, [overview, activeElapsedSeconds]);
 
-  // Quick Session Actions directly from Analytics
+  // Manual refresh handler
+  const handleManualRefresh = useCallback(async () => {
+    await Promise.all([refetchOverview(), refetchTrends(), refetchTopics()]);
+  }, [refetchOverview, refetchTrends, refetchTopics]);
+
+  // Quick Session Controls directly from Analytics
   async function handleQuickStart() {
     setActionBusy(true);
+    setActionError("");
     try {
       const res = await fetch(`${API}/focus/sessions/start`, {
         method: "POST",
@@ -178,11 +120,14 @@ export default function AnalyticsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      if (res.ok) {
-        await load();
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Failed to start session.");
       }
+      invalidateAnalytics();
+      await handleManualRefresh();
     } catch (e) {
-      setError("Failed to start session.");
+      setActionError(e instanceof Error ? e.message : "Failed to start session.");
     } finally {
       setActionBusy(false);
     }
@@ -191,17 +136,18 @@ export default function AnalyticsPage() {
   async function handleQuickTogglePause() {
     if (!overview?.activeSessionId) return;
     setActionBusy(true);
+    setActionError("");
     try {
       const actionName = overview.activeSessionStatus === "PAUSED" ? "resume" : "pause";
       const res = await fetch(`${API}/focus/sessions/${overview.activeSessionId}/${actionName}`, {
         method: "POST",
         credentials: "include",
       });
-      if (res.ok) {
-        await load();
-      }
+      if (!res.ok) throw new Error("Action failed.");
+      invalidateAnalytics();
+      await handleManualRefresh();
     } catch (e) {
-      setError("Action failed.");
+      setActionError(e instanceof Error ? e.message : "Failed to toggle pause.");
     } finally {
       setActionBusy(false);
     }
@@ -210,16 +156,17 @@ export default function AnalyticsPage() {
   async function handleQuickStop() {
     if (!overview?.activeSessionId) return;
     setActionBusy(true);
+    setActionError("");
     try {
       const res = await fetch(`${API}/focus/sessions/${overview.activeSessionId}/stop`, {
         method: "POST",
         credentials: "include",
       });
-      if (res.ok) {
-        await load();
-      }
+      if (!res.ok) throw new Error("Failed to stop session.");
+      invalidateAnalytics();
+      await handleManualRefresh();
     } catch (e) {
-      setError("Failed to stop session.");
+      setActionError(e instanceof Error ? e.message : "Failed to stop session.");
     } finally {
       setActionBusy(false);
     }
@@ -232,24 +179,16 @@ export default function AnalyticsPage() {
     return dateStr === localToday;
   };
 
-  const liveSessionSeconds = overview?.isFocusingNow ? (overview.activeSessionSeconds ?? 0) : 0;
+  const totalWeekMinutes = useMemo(() => {
+    if (trend?.weekTotalMinutes !== undefined) return trend.weekTotalMinutes;
+    const baseSecs = trend?.studyMinutes?.reduce((acc, curr) => acc + (curr.seconds ?? (curr.minutes * 60)), 0) ?? 0;
+    return Math.floor(baseSecs / 60);
+  }, [trend]);
 
-  const totalWeekSeconds = useMemo(() => {
-    const base = trend?.studyMinutes.reduce((acc, curr) => acc + (curr.seconds ?? (curr.minutes * 60)), 0) ?? 0;
-    return base + liveSessionSeconds;
-  }, [trend?.studyMinutes, liveSessionSeconds]);
-
-  const totalWeekMinutes = Math.floor(totalWeekSeconds / 60);
-
-  const maxSecondsInWeek = useMemo(() => {
-    const daySecs = (trend?.studyMinutes ?? []).map((x) => {
-      const isTod = isToday(x.date);
-      return (x.seconds ?? (x.minutes * 60)) + (isTod ? liveSessionSeconds : 0);
-    });
-    return Math.max(1800, ...daySecs);
-  }, [trend?.studyMinutes, liveSessionSeconds]);
-
-  const maxMinutes = Math.ceil(maxSecondsInWeek / 60);
+  const maxMinutesInWeek = useMemo(() => {
+    const dayMins = (trend?.studyMinutes ?? []).map((x) => x.minutes);
+    return Math.max(30, ...dayMins);
+  }, [trend?.studyMinutes]);
 
   function formatBarDuration(secs: number, isLive: boolean): string {
     if (isLive) {
@@ -265,71 +204,52 @@ export default function AnalyticsPage() {
     return `${m}m ${s}s`;
   }
 
-  // Compute Active Practice Days: count days with study time, completed tasks, or quizzes
-  const activeDaysCount = useMemo(() => {
-    if (!trend?.studyMinutes) return 0;
-    let count = 0;
-    for (let i = 0; i < trend.studyMinutes.length; i++) {
-      const m = trend.studyMinutes[i].minutes;
-      const s = trend.studyMinutes[i].seconds ?? 0;
-      const t = trend.taskCompletions[i]?.completed ?? 0;
-      const q = trend.quizAccuracy[i]?.percent !== undefined;
-      const todayMatch = isToday(trend.studyMinutes[i].date);
-      const isTodayActive = todayMatch && (overview?.isFocusingNow || (overview?.activeSessionSeconds ?? 0) > 0);
-      if (m > 0 || s > 0 || t > 0 || q || isTodayActive) {
-        count++;
-      }
+  // Filtered Topic Mastery List
+  const filteredTopics = useMemo(() => {
+    if (topicCategoryFilter === "ACADEMIC") {
+      return topicMasteryList.filter((t) => t.isAcademic);
     }
-    return count;
-  }, [trend, overview?.isFocusingNow, overview?.activeSessionSeconds]);
-
-  // Derived Topic Mastery Insights
-  const topicInsights = useMemo(() => {
-    const topicMap: Record<string, { totalScore: number; count: number }> = {};
-    for (const q of quizzes) {
-      if (typeof q.scorePercent !== "number" || isNaN(q.scorePercent)) continue;
-      const t = q.topic || q.title.replace(/^(Quiz\s+on\s+|Practice:\s*)/i, "").trim() || "Data Structures";
-      if (!topicMap[t]) topicMap[t] = { totalScore: 0, count: 0 };
-      topicMap[t].totalScore += q.scorePercent;
-      topicMap[t].count += 1;
+    if (topicCategoryFilter === "RESEARCH") {
+      return topicMasteryList.filter((t) => !t.isAcademic);
     }
+    return topicMasteryList;
+  }, [topicMasteryList, topicCategoryFilter]);
 
-    return Object.entries(topicMap)
-      .filter(([_, data]) => data.count > 0 && !isNaN(data.totalScore))
-      .map(([topic, data]) => {
-        const avg = Math.round(data.totalScore / data.count);
-        return {
-          topic,
-          averageScore: avg,
-          attempts: data.count,
-          isWeak: avg < 65,
-          isMastered: avg >= 80,
-        };
-      })
-      .sort((a, b) => a.averageScore - b.averageScore);
-  }, [quizzes]);
-
+  // Daily activity rows from backend dailyBreakdown
   const activityRows = useMemo(() => {
+    if (trend?.dailyBreakdown && trend.dailyBreakdown.length > 0) {
+      return trend.dailyBreakdown.filter((row) => (hideEmptyDays ? row.hasActivity || isToday(row.date) : true));
+    }
     if (!trend?.studyMinutes) return [];
     return trend.studyMinutes
       .map((day, i) => {
         const completedCount = trend.taskCompletions[i]?.completed ?? 0;
         const quizAcc = trend.quizAccuracy[i]?.percent;
         const todayMatch = isToday(day.date);
-        const liveSecs = todayMatch && overview?.isFocusingNow ? (overview.activeSessionSeconds ?? 0) : 0;
+        const liveSecs = todayMatch && overview?.isFocusingNow ? activeElapsedSeconds : 0;
         const effectiveMins = day.minutes + Math.floor(liveSecs / 60);
-        const hasActivity = effectiveMins > 0 || completedCount > 0 || (quizAcc !== undefined && quizAcc !== null) || liveSecs > 0;
+        const hasActivity = effectiveMins > 0 || completedCount > 0 || (quizAcc !== undefined && quizAcc !== null);
         return {
           date: day.date,
-          minutes: effectiveMins,
+          dayName: new Date(`${day.date}T12:00:00`).toLocaleDateString(undefined, { weekday: "short" }),
+          focusMinutes: effectiveMins,
           liveSeconds: liveSecs % 60,
-          completedCount,
-          quizAcc,
+          completedTasks: completedCount,
+          quizzesTaken: quizAcc !== undefined ? 1 : 0,
+          quizAccuracy: quizAcc ?? null,
           hasActivity,
         };
       })
       .filter((row) => (hideEmptyDays ? row.hasActivity || isToday(row.date) : true));
-  }, [trend, hideEmptyDays, overview?.isFocusingNow, overview?.activeSessionSeconds]);
+  }, [trend, hideEmptyDays, overview?.isFocusingNow, activeElapsedSeconds]);
+
+  const isGlobalFetching = isOverviewFetching || isTrendFetching || isTopicsFetching;
+  const isGlobalError = isOverviewError || isTrendError || isTopicsError;
+
+  const lastSyncedTime = useMemo(() => {
+    if (!overviewUpdatedAt) return "Connecting...";
+    return new Date(overviewUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }, [overviewUpdatedAt]);
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-primary text-brand-neutral">
@@ -342,16 +262,60 @@ export default function AnalyticsPage() {
           title="Progress & Analytics"
           description="Real-time verified study intervals, schedule velocity, and topic retention across all modules."
           actions={
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-secondary border border-emerald-500/30 text-[11px] text-emerald-300">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="font-mono text-[10px] uppercase font-bold tracking-wider">
-                  {overview?.isFocusingNow ? "Live Focus Session" : "Live Telemetry"}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Honest Freshness Status Badge */}
+              <div
+                className={`flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono border transition-all ${
+                  isGlobalError
+                    ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                    : isGlobalFetching
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                    : overview?.isFocusingNow
+                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                    : "bg-brand-secondary border-emerald-500/30 text-emerald-300"
+                }`}
+              >
+                {isGlobalError ? (
+                  <>
+                    <AlertTriangle size={12} className="text-rose-400 shrink-0" />
+                    <span className="uppercase font-bold tracking-wider">Connection Error</span>
+                  </>
+                ) : isGlobalFetching ? (
+                  <>
+                    <RefreshCw size={12} className="animate-spin text-amber-400 shrink-0" />
+                    <span className="uppercase font-bold tracking-wider">Syncing...</span>
+                  </>
+                ) : overview?.isFocusingNow ? (
+                  <>
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="uppercase font-bold tracking-wider">Live Focus Active</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <span className="uppercase font-bold tracking-wider">Live Telemetry</span>
+                  </>
+                )}
+                <span className="text-[10px] text-brand-muted hidden sm:inline border-l border-brand-neutral/20 pl-2">
+                  {lastSyncedTime}
                 </span>
               </div>
+
+              {/* Manual Refresh Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={isGlobalFetching || actionBusy}
+                icon={<RefreshCw size={12} className={isGlobalFetching ? "animate-spin shrink-0" : "shrink-0"} />}
+                className="text-xs px-2.5"
+                title="Refresh Analytics Telemetry"
+              >
+                Refresh
+              </Button>
 
               {!overview?.isFocusingNow && (
                 <Button
@@ -359,7 +323,7 @@ export default function AnalyticsPage() {
                   size="sm"
                   onClick={handleQuickStart}
                   disabled={actionBusy}
-                  icon={<Play size={13} className="text-emerald-400" />}
+                  icon={<Play size={13} className="text-emerald-400 shrink-0" />}
                   className="text-xs border-emerald-500/30 hover:border-emerald-500/60"
                 >
                   Start Focus
@@ -367,12 +331,12 @@ export default function AnalyticsPage() {
               )}
 
               <Link href="/focus">
-                <Button variant="secondary" size="sm" icon={<Clock size={13} />} className="text-xs">
+                <Button variant="secondary" size="sm" icon={<Clock size={13} className="shrink-0" />} className="text-xs">
                   Focus Mode
                 </Button>
               </Link>
               <Link href="/tasks">
-                <Button variant="primary" size="sm" icon={<CheckCircle2 size={13} />} className="text-xs">
+                <Button variant="primary" size="sm" icon={<CheckCircle2 size={13} className="shrink-0" />} className="text-xs">
                   Tasks
                 </Button>
               </Link>
@@ -398,10 +362,10 @@ export default function AnalyticsPage() {
                 <p className="text-xs text-brand-neutral mt-0.5">
                   Recording elapsed:{" "}
                   <span className="font-mono font-bold text-emerald-300 text-sm">
-                    +{Math.floor((overview.activeSessionSeconds ?? 0) / 60)}m{" "}
-                    {String((overview.activeSessionSeconds ?? 0) % 60).padStart(2, "0")}s
+                    +{Math.floor(activeElapsedSeconds / 60)}m{" "}
+                    {String(activeElapsedSeconds % 60).padStart(2, "0")}s
                   </span>
-                  . Daily charts and cumulative totals increment in real time.
+                  . Metrics increment automatically without page refresh.
                 </p>
               </div>
             </div>
@@ -412,7 +376,7 @@ export default function AnalyticsPage() {
                 size="sm"
                 onClick={handleQuickTogglePause}
                 disabled={actionBusy}
-                icon={overview.activeSessionStatus === "PAUSED" ? <Play size={12} /> : <Pause size={12} />}
+                icon={overview.activeSessionStatus === "PAUSED" ? <Play size={12} className="shrink-0" /> : <Pause size={12} className="shrink-0" />}
                 className="text-xs"
               >
                 {overview.activeSessionStatus === "PAUSED" ? "Resume" : "Pause"}
@@ -422,13 +386,13 @@ export default function AnalyticsPage() {
                 size="sm"
                 onClick={handleQuickStop}
                 disabled={actionBusy}
-                icon={<Square size={12} className="text-white fill-current" />}
+                icon={<Square size={12} className="text-white fill-current shrink-0" />}
                 className="text-xs bg-emerald-700 hover:bg-emerald-600 border-none text-white"
               >
                 Finish & Save
               </Button>
               <Link href="/focus">
-                <Button variant="ghost" size="sm" icon={<Clock size={12} />} className="text-xs text-emerald-200">
+                <Button variant="ghost" size="sm" icon={<Clock size={12} className="shrink-0" />} className="text-xs text-emerald-200">
                   Full Timer
                 </Button>
               </Link>
@@ -436,15 +400,22 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {demoMode && (
-          <div className="px-4 py-3 rounded-lg bg-brand-accent/20 border border-brand-neutral/20 text-brand-light text-xs mb-6">
-            <span className="font-semibold text-brand-neutral">Preview mode:</span> Demonstrating 7-day study telemetry. Complete timer sessions and quizzes to record live metrics.
+        {actionError && (
+          <div role="alert" className="px-4 py-3 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs mb-6 flex items-center justify-between">
+            <span>{actionError}</span>
+            <button onClick={() => setActionError("")} className="text-rose-400 hover:text-rose-200 text-xs">Dismiss</button>
           </div>
         )}
 
-        {error && (
-          <div role="alert" className="px-4 py-3 rounded-lg bg-rose-950/40 border border-rose-500/20 text-rose-300 text-xs mb-6">
-            {error}
+        {isGlobalError && !overview && (
+          <div role="alert" className="px-4 py-3 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs mb-6">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-rose-400 shrink-0" />
+              <span>Could not load live analytics from server. Database or authentication check failed.</span>
+            </div>
+            <Button variant="secondary" size="sm" onClick={handleManualRefresh} className="mt-2 text-xs">
+              Retry Connection
+            </Button>
           </div>
         )}
 
@@ -456,8 +427,8 @@ export default function AnalyticsPage() {
                 label="Study Time Recorded"
                 value={
                   overview.isFocusingNow
-                    ? `${Math.max(overview.totalStudyMinutes, totalWeekMinutes)}m ${((overview.activeSessionSeconds ?? 0) % 60)}s`
-                    : Math.max(overview.totalStudyMinutes, totalWeekMinutes)
+                    ? `${totalStudyMinutesCalculated}m ${activeElapsedSeconds % 60}s`
+                    : `${overview.totalStudyMinutes}`
                 }
                 unit={overview.isFocusingNow ? "" : "min"}
                 icon={Clock}
@@ -469,13 +440,13 @@ export default function AnalyticsPage() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                       </span>
-                      Live: +{Math.floor((overview.activeSessionSeconds ?? 0) / 60)}m{" "}
-                      {String((overview.activeSessionSeconds ?? 0) % 60).padStart(2, "0")}s active
+                      Live: +{Math.floor(activeElapsedSeconds / 60)}m{" "}
+                      {String(activeElapsedSeconds % 60).padStart(2, "0")}s active
                     </span>
                   ) : totalWeekMinutes > 0 ? (
-                    `${totalWeekMinutes}m verified this week`
+                    `${totalWeekMinutes}m verified this week · ${overview.totalStudyMinutes}m total`
                   ) : (
-                    "Verified focus intervals"
+                    "0m verified this week · Start a focus session"
                   )
                 }
               />
@@ -485,27 +456,23 @@ export default function AnalyticsPage() {
                 value={`${overview.completedTasks}/${overview.totalTasks}`}
                 icon={CheckCircle2}
                 iconColor="#10b981"
-                progressPercent={
-                  overview.totalTasks > 0
-                    ? Math.round((overview.completedTasks / overview.totalTasks) * 100)
-                    : 0
-                }
+                progressPercent={overview.taskCompletionPercent}
                 subtext={
                   overview.totalTasks > 0
-                    ? `${overview.taskCompletionPercent}% schedule velocity`
-                    : "0% velocity · Plan tasks"
+                    ? `${overview.taskCompletionPercent}% schedule velocity (${overview.pendingTasks ?? 0} pending)`
+                    : "0% velocity · Plan tasks in schedule"
                 }
               />
 
               <StatCard
                 label="Active Practice Days"
-                value={`${activeDaysCount}/7`}
+                value={`${overview.activePracticeDays ?? 0}/7`}
                 unit="days"
                 icon={Flame}
                 iconColor="#f59e0b"
-                progressPercent={Math.round((activeDaysCount / 7) * 100)}
+                progressPercent={Math.round(((overview.activePracticeDays ?? 0) / 7) * 100)}
                 subtext={
-                  activeDaysCount >= 4
+                  (overview.activePracticeDays ?? 0) >= 4
                     ? "Consistent momentum this week"
                     : "Aim for 4+ study days weekly"
                 }
@@ -518,7 +485,7 @@ export default function AnalyticsPage() {
                 iconColor="#ABD2FA"
                 subtext={
                   overview.quizAttempts > 0
-                    ? `${overview.quizAttempts} test attempt${overview.quizAttempts === 1 ? "" : "s"}`
+                    ? `${overview.quizAttempts} test attempt${overview.quizAttempts === 1 ? "" : "s"} (${overview.totalCorrectAnswers ?? 0}/${overview.totalQuestionsAnswered ?? 0} correct)`
                     : "Take quizzes to test recall"
                 }
               />
@@ -531,7 +498,7 @@ export default function AnalyticsPage() {
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-semibold text-brand-light">Study Time Distribution</h2>
                     <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#1B2CC1]/20 text-[#ABD2FA] border border-[#7692FF]/30">
-                      7-Day Telemetry
+                      7-Day Telemetry (Asia/Kolkata)
                     </span>
                   </div>
                   <p className="text-xs text-brand-muted mt-0.5">Daily verified focus minutes and active session intervals</p>
@@ -540,19 +507,18 @@ export default function AnalyticsPage() {
                   {overview.isFocusingNow ? (
                     <div className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-mono shadow-sm shadow-emerald-500/20">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span>Live Active: {formatBarDuration(overview.activeSessionSeconds ?? 0, true)}</span>
+                      <span>Live Active: {formatBarDuration(activeElapsedSeconds, true)}</span>
                     </div>
                   ) : (
                     <div className="hidden sm:flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded bg-[#102161]/60 border border-[#7692FF]/20 text-[#ABD2FA] font-mono">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#7692FF]" />
-                      Real-time Synced
+                      Database Grounded
                     </div>
                   )}
                   <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-brand-raised border border-brand-neutral/25 text-xs">
                     <span className="text-brand-muted">Week Total:</span>
                     <span className="font-semibold text-brand-neutral font-mono text-[#ABD2FA]">
                       {totalWeekMinutes > 0 ? `${totalWeekMinutes}m` : "0m"}
-                      {totalWeekSeconds % 60 > 0 && totalWeekMinutes < 60 ? ` ${totalWeekSeconds % 60}s` : ""}
                     </span>
                   </div>
                 </div>
@@ -560,12 +526,12 @@ export default function AnalyticsPage() {
 
               {trend && (
                 <div className="relative">
-                  {totalWeekSeconds === 0 && !overview.isFocusingNow ? (
+                  {totalWeekMinutes === 0 && !overview.isFocusingNow ? (
                     <div className="py-10 text-center rounded-lg bg-brand-raised border border-dashed border-brand-neutral/25">
                       <Clock size={24} className="text-brand-muted mx-auto mb-2" />
                       <h3 className="text-xs font-semibold text-brand-neutral mb-1">No Study Minutes Recorded This Week</h3>
                       <p className="text-xs text-brand-muted max-w-sm mx-auto mb-3">
-                        Start a focused study block using the Focus Timer to log minutes here automatically.
+                        Start a focused study block using the Focus Timer to log verified intervals automatically.
                       </p>
                       <Button
                         variant="primary"
@@ -586,8 +552,8 @@ export default function AnalyticsPage() {
 
                       {/* Y-Axis Labels */}
                       <div className="w-8 h-full flex flex-col justify-between pb-9 text-[10px] font-mono text-brand-muted text-right select-none">
-                        <span>{maxMinutes}m</span>
-                        <span>{Math.round(maxMinutes / 2)}m</span>
+                        <span>{maxMinutesInWeek}m</span>
+                        <span>{Math.round(maxMinutesInWeek / 2)}m</span>
                         <span>0m</span>
                       </div>
 
@@ -595,9 +561,9 @@ export default function AnalyticsPage() {
                       <div className="flex-1 flex justify-around items-end h-full relative pl-2">
                         {trend.studyMinutes.map((day, idx) => {
                           const todayMatch = isToday(day.date);
-                          const liveSecs = todayMatch && overview?.isFocusingNow ? (overview.activeSessionSeconds ?? 0) : 0;
-                          const effectiveSeconds = (day.seconds ?? (day.minutes * 60)) + liveSecs;
-                          const maxSecs = Math.max(1800, maxMinutes * 60);
+                          const liveSecs = todayMatch && overview?.isFocusingNow ? activeElapsedSeconds : 0;
+                          const effectiveSeconds = (day.verifiedSeconds ?? (day.minutes * 60)) + liveSecs;
+                          const maxSecs = Math.max(1800, maxMinutesInWeek * 60);
                           const heightPct =
                             effectiveSeconds > 0
                               ? Math.max(14, Math.min(100, Math.round((effectiveSeconds / maxSecs) * 82)))
@@ -715,58 +681,114 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column: Topic Mastery */}
               <section className="p-5 sm:p-6 rounded-xl bg-brand-secondary border border-brand-neutral/20">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div>
-                    <h2 className="text-sm font-semibold text-brand-light">Topic Mastery</h2>
-                    <p className="text-xs text-brand-muted mt-0.5">Derived from verified quiz attempts</p>
+                    <h2 className="text-sm font-semibold text-brand-light flex items-center gap-1.5">
+                      <Brain size={15} className="text-[#7692FF]" />
+                      Topic Mastery & Retention
+                    </h2>
+                    <p className="text-xs text-brand-muted mt-0.5">Categorized by academic curriculum and web research</p>
                   </div>
-                  <Brain size={16} className="text-brand-neutral" />
+
+                  {/* Filter Pills */}
+                  <div className="flex items-center gap-1 bg-brand-raised p-0.5 rounded-lg border border-brand-neutral/20 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setTopicCategoryFilter("ALL")}
+                      className={`px-2 py-1 rounded transition-colors ${
+                        topicCategoryFilter === "ALL"
+                          ? "bg-[#1B2CC1] text-white font-medium"
+                          : "text-brand-muted hover:text-brand-neutral"
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTopicCategoryFilter("ACADEMIC")}
+                      className={`px-2 py-1 rounded transition-colors ${
+                        topicCategoryFilter === "ACADEMIC"
+                          ? "bg-[#1B2CC1] text-white font-medium"
+                          : "text-brand-muted hover:text-brand-neutral"
+                      }`}
+                    >
+                      VTU Syllabus
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTopicCategoryFilter("RESEARCH")}
+                      className={`px-2 py-1 rounded transition-colors ${
+                        topicCategoryFilter === "RESEARCH"
+                          ? "bg-[#1B2CC1] text-white font-medium"
+                          : "text-brand-muted hover:text-brand-neutral"
+                      }`}
+                    >
+                      Web Research
+                    </button>
+                  </div>
                 </div>
 
-                {topicInsights.length === 0 ? (
+                {filteredTopics.length === 0 ? (
                   <div className="py-8 text-center rounded-lg bg-brand-raised border border-dashed border-brand-neutral/20">
-                    <p className="text-xs text-brand-muted mb-2">No quiz topic data recorded yet.</p>
+                    <p className="text-xs text-brand-muted mb-2">
+                      {topicCategoryFilter === "ALL"
+                        ? "No quiz topic data recorded yet."
+                        : `No topics recorded for category: ${topicCategoryFilter}.`}
+                    </p>
                     <Link href="/quizzes">
-                      <Button variant="ghost" size="sm" icon={<ArrowRight size={13} />} className="text-xs">
+                      <Button variant="ghost" size="sm" icon={<ArrowRight size={13} className="shrink-0" />} className="text-xs">
                         Take a Quiz
                       </Button>
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {topicInsights.map((ti) => (
+                  <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                    {filteredTopics.map((ti) => (
                       <div
                         key={ti.topic}
                         className={`flex items-center justify-between gap-3 p-3 rounded-lg border transition-colors ${
-                          ti.isWeak
+                          ti.status === "NEEDS_REVIEW"
                             ? "bg-rose-950/20 border-rose-500/20"
+                            : ti.status === "MASTERED"
+                            ? "bg-emerald-950/20 border-emerald-500/20"
                             : "bg-brand-raised border-brand-neutral/20"
                         }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            {ti.isWeak && <AlertTriangle size={12} className="text-rose-400 shrink-0" />}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {ti.status === "NEEDS_REVIEW" && <AlertTriangle size={12} className="text-rose-400 shrink-0" />}
                             <h4 className="text-xs font-medium text-brand-neutral truncate">{ti.topic}</h4>
+                            <span
+                              className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${
+                                ti.isAcademic
+                                  ? "bg-blue-500/10 text-blue-300 border-blue-500/30"
+                                  : "bg-purple-500/10 text-purple-300 border-purple-500/30"
+                              }`}
+                            >
+                              {ti.isAcademic ? "VTU Academic" : "Web Research"}
+                            </span>
                           </div>
                           <p className="text-[11px] text-brand-muted mt-0.5">
-                            {ti.attempts} quiz attempt{ti.attempts === 1 ? "" : "s"}
+                            {ti.attempts} quiz attempt{ti.attempts === 1 ? "" : "s"} · {ti.totalCorrect}/{ti.totalQuestions} questions correct
                           </p>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                              ti.isWeak
-                                ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                                : ti.isMastered
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                : "bg-brand-secondary text-brand-neutral border border-brand-neutral/30"
+                              ti.status === "MASTERED"
+                                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                : ti.status === "PRACTICING"
+                                ? "bg-blue-500/15 text-blue-300 border border-blue-500/30"
+                                : ti.status === "NEEDS_REVIEW"
+                                ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
                             }`}
                           >
-                            {ti.isWeak ? "Review" : ti.isMastered ? "Mastered" : "Practicing"}
+                            {ti.statusLabel ?? (ti.status === "INSUFFICIENT_DATA" ? "1 Attempt (Needs More)" : ti.status)}
                           </span>
                           <span className="text-xs font-semibold font-mono text-brand-neutral w-9 text-right">
-                            {ti.averageScore}%
+                            {ti.averageScore !== null ? `${ti.averageScore}%` : "—"}
                           </span>
                         </div>
                       </div>
@@ -780,15 +802,15 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-sm font-semibold text-brand-light">Daily Breakdown</h2>
-                    <p className="text-xs text-brand-muted mt-0.5">Sessions, tasks, and accuracy</p>
+                    <p className="text-xs text-brand-muted mt-0.5">7-day verified sessions, tasks, and accuracy</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setHideEmptyDays((prev) => !prev)}
-                    className="flex items-center gap-1 text-[11px] text-brand-neutral hover:text-brand-neutral px-2 py-1 rounded bg-brand-raised border border-brand-neutral/25 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-[11px] text-brand-neutral hover:text-brand-neutral px-2.5 py-1.5 rounded-lg bg-brand-raised border border-brand-neutral/25 transition-colors cursor-pointer shrink-0"
                   >
-                    {hideEmptyDays ? <Eye size={12} /> : <EyeOff size={12} />}
-                    {hideEmptyDays ? "Show all" : "Hide inactive"}
+                    {hideEmptyDays ? <Eye size={12} className="shrink-0" /> : <EyeOff size={12} className="shrink-0" />}
+                    <span>{hideEmptyDays ? "Show all" : "Hide inactive"}</span>
                   </button>
                 </div>
 
@@ -825,14 +847,16 @@ export default function AnalyticsPage() {
                           </div>
 
                           <div className="flex items-center gap-3 text-xs">
-                            <span className={row.minutes > 0 || row.liveSeconds > 0 ? "text-brand-neutral font-mono" : "text-brand-muted font-mono"}>
-                              {row.minutes}m{row.liveSeconds > 0 ? ` +${row.liveSeconds}s` : ""}
+                            <span className={row.focusMinutes > 0 || (row.liveSeconds ?? 0) > 0 ? "text-brand-neutral font-mono" : "text-brand-muted font-mono"}>
+                              {row.focusMinutes}m{(row.liveSeconds ?? 0) > 0 ? ` +${row.liveSeconds}s` : ""}
                             </span>
-                            <span className={row.completedCount > 0 ? "text-emerald-400" : "text-brand-muted"}>
-                              {row.completedCount} task{row.completedCount === 1 ? "" : "s"}
+                            <span className={row.completedTasks > 0 ? "text-emerald-400" : "text-brand-muted"}>
+                              {row.completedTasks} task{row.completedTasks === 1 ? "" : "s"}
                             </span>
-                            {row.quizAcc !== undefined && (
-                              <span className="text-brand-neutral font-mono">{row.quizAcc}% quiz</span>
+                            {row.quizAccuracy !== null && row.quizAccuracy !== undefined ? (
+                              <span className="text-brand-neutral font-mono">{row.quizAccuracy}% quiz</span>
+                            ) : (
+                              <span className="text-brand-muted font-mono">—</span>
                             )}
                           </div>
                         </div>
