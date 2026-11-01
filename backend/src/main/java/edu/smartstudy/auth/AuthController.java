@@ -1,4 +1,5 @@
 package edu.smartstudy.auth;
+
 import edu.smartstudy.user.*;
 import edu.smartstudy.security.TokenService;
 import jakarta.servlet.http.Cookie;
@@ -56,6 +57,8 @@ public class AuthController {
 
     public record Login(@Email @NotBlank String email, @NotBlank String password) {}
 
+    public record RefreshRequest(String refreshToken) {}
+
     public record ForgotPassword(@Email @NotBlank String email) {}
 
     public record ResetPassword(@NotBlank String token, @NotBlank @Size(min = 10, max = 72) String password) {}
@@ -88,15 +91,46 @@ public class AuthController {
         return builder.build();
     }
 
+    private ResponseCookie buildRefreshCookie(String token, long maxAge) {
+        var builder = ResponseCookie.from("study_refresh", token)
+                .httpOnly(true)
+                .path("/api/v1/auth")
+                .maxAge(maxAge);
+
+        if (cookieSameSite != null && !cookieSameSite.isBlank()) {
+            builder.sameSite(cookieSameSite.trim());
+        } else {
+            builder.sameSite(cookieSecure ? "None" : "Lax");
+        }
+
+        builder.secure(cookieSecure);
+
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            builder.domain(cookieDomain.trim());
+        }
+        return builder.build();
+    }
+
     private ResponseEntity<?> session(User user) {
-        String token = tokens.issue(user);
-        var cookie = buildSessionCookie(token, 3600);
+        String accessToken = tokens.issueAccessToken(user);
+        String refreshToken = tokens.issueRefreshToken(user);
+
+        var sessionCookie = buildSessionCookie(accessToken, 3600);
+        var refreshCookie = buildRefreshCookie(refreshToken, 7 * 24 * 3600);
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(Map.of("id", user.getId(), "name", user.getName(), "email", user.getEmail(),
-                        "role", user.getRole(), "timezone", user.getTimezone(),
+                .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(Map.of(
+                        "id", user.getId(),
+                        "name", user.getName(),
+                        "email", user.getEmail(),
+                        "role", user.getRole(),
+                        "timezone", user.getTimezone(),
                         "emailVerified", user.isEmailVerified(),
-                        "token", token));
+                        "token", accessToken,
+                        "refreshToken", refreshToken
+                ));
     }
 
     private String hashToken(byte[] token) {
@@ -158,43 +192,73 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(HttpServletRequest req) {
+    public ResponseEntity<?> refresh(@RequestBody(required = false) RefreshRequest body, HttpServletRequest req) {
         String rawToken = null;
+
+        // 1. Try reading the dedicated HttpOnly study_refresh cookie
         Cookie[] cs = req.getCookies();
         if (cs != null) {
             for (Cookie c : cs) {
-                if ("study_session".equals(c.getName())) {
+                if ("study_refresh".equals(c.getName())) {
                     rawToken = c.getValue();
                     break;
                 }
             }
         }
-        if (rawToken == null) {
+
+        // 2. Try JSON request body
+        if ((rawToken == null || rawToken.isBlank()) && body != null && body.refreshToken() != null && !body.refreshToken().isBlank()) {
+            rawToken = body.refreshToken().trim();
+        }
+
+        // 3. Try Authorization Bearer header
+        if (rawToken == null || rawToken.isBlank()) {
             String authHeader = req.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 rawToken = authHeader.substring(7).trim();
             }
         }
+
+        // 4. Fallback to study_session cookie if it holds a refresh token
         if (rawToken == null || rawToken.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No session token provided for refresh");
+            if (cs != null) {
+                for (Cookie c : cs) {
+                    if ("study_session".equals(c.getName())) {
+                        rawToken = c.getValue();
+                        break;
+                    }
+                }
+            }
         }
+
+        if (rawToken == null || rawToken.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token provided");
+        }
+
         try {
-            Claims claims = tokens.parseClaimsForRefresh(rawToken);
+            Claims claims = tokens.parseRefreshToken(rawToken);
             String email = claims.getSubject();
             Integer tokenVersion = claims.get("token_version", Integer.class);
+
             var userOpt = users.findEnabledByEmailIgnoreCase(email);
             if (userOpt.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User account not found or disabled");
             }
+
             User user = userOpt.get();
             if (tokenVersion == null || !tokenVersion.equals(user.getTokenVersion())) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session has been invalidated. Please log in again.");
             }
+
+            // Successfully validated refresh token -> ROTATE by issuing new access and refresh tokens
             return session(user);
         } catch (ResponseStatusException rse) {
             throw rse;
+        } catch (IllegalArgumentException iae) {
+            // Rejection of access token passed to refresh endpoint
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, iae.getMessage());
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session token");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid, expired, or revoked refresh token");
         }
     }
 
@@ -202,11 +266,12 @@ public class AuthController {
     public ResponseEntity<?> logout(org.springframework.security.core.Authentication auth, HttpServletRequest req) {
         String email = auth != null ? auth.getName() : null;
         if (email == null) {
-            String rawToken = null;
+            // Attempt to identify user from session or refresh cookies
             Cookie[] cs = req.getCookies();
+            String rawToken = null;
             if (cs != null) {
                 for (Cookie c : cs) {
-                    if ("study_session".equals(c.getName())) {
+                    if ("study_refresh".equals(c.getName()) || "study_session".equals(c.getName())) {
                         rawToken = c.getValue();
                         break;
                     }
@@ -220,7 +285,7 @@ public class AuthController {
             }
             if (rawToken != null) {
                 try {
-                    Claims claims = tokens.parseClaimsForRefresh(rawToken);
+                    Claims claims = tokens.parse(rawToken);
                     email = claims.getSubject();
                 } catch (Exception ignored) {}
             }
@@ -229,12 +294,19 @@ public class AuthController {
         if (email != null) {
             User u = users.findByEmailIgnoreCase(email).orElse(null);
             if (u != null) {
+                // Incrementing token version invalidates ALL outstanding access and refresh tokens
                 u.incrementTokenVersion();
                 users.save(u);
             }
         }
-        var cookie = buildSessionCookie("", 0);
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(Map.of("ok", true));
+
+        var sessionCookie = buildSessionCookie("", 0);
+        var refreshCookie = buildRefreshCookie("", 0);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(Map.of("ok", true));
     }
 
     @GetMapping("/me")
@@ -272,7 +344,7 @@ public class AuthController {
         u.setPasswordHash(passwords.encode(input.password()));
         u.setPasswordResetTokenHash(null);
         u.setPasswordResetExpires(null);
-        u.incrementTokenVersion(); // Invalidate all sessions
+        u.incrementTokenVersion(); // Invalidate all sessions and refresh tokens
         users.save(u);
         return ResponseEntity.ok(Map.of("message", "Password reset successful. Please log in."));
     }
@@ -285,11 +357,9 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
         }
         u.setPasswordHash(passwords.encode(input.newPassword()));
-        u.incrementTokenVersion(); // Invalidate all sessions
+        u.incrementTokenVersion(); // Invalidate all sessions and refresh tokens
         users.save(u);
-        var cookie = buildSessionCookie(tokens.issue(u), 3600);
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(Map.of("message", "Password changed. You are now logged in with the new password."));
+        return session(u);
     }
 
     @PostMapping("/verify-email")
@@ -330,8 +400,13 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is incorrect");
         }
         users.delete(u);
-        var cookie = buildSessionCookie("", 0);
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+
+        var sessionCookie = buildSessionCookie("", 0);
+        var refreshCookie = buildRefreshCookie("", 0);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .body(Map.of("message", "Account deleted"));
     }
 

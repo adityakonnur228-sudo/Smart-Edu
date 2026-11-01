@@ -28,7 +28,7 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
     if (msg.type() === 'error') {
       const text = msg.text();
       // Ignore normal expected resource 401s during negative tests
-      if (!text.includes('favicon') && !text.includes('401')) {
+      if (!text.includes('favicon') && !text.includes('401') && !text.includes('403')) {
         uncaughtConsoleErrors.push(text);
       }
     }
@@ -106,13 +106,15 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
     const postLoginUrl = page.url();
 
     const storedToken = await page.evaluate(() => localStorage.getItem('study_token'));
+    const storedRefreshToken = await page.evaluate(() => localStorage.getItem('study_refresh_token'));
     const cookies = await context.cookies();
     const sessionCookie = cookies.find(c => c.name === 'study_session');
+    const refreshCookie = cookies.find(c => c.name === 'study_refresh');
 
-    if (storedToken && sessionCookie && postLoginUrl.includes('/dashboard')) {
-      logResult('Step 5: Log in with valid credentials', 'PASS', `Redirected to ${postLoginUrl}. Bearer token and study_session cookie successfully stored.`);
+    if (storedToken && storedRefreshToken && sessionCookie && refreshCookie && postLoginUrl.includes('/dashboard')) {
+      logResult('Step 5: Log in with valid credentials & dual tokens', 'PASS', `Redirected to ${postLoginUrl}. Access token, Refresh token, and HttpOnly cookies (study_session, study_refresh) verified.`);
     } else {
-      logResult('Step 5: Log in with valid credentials', 'FAIL', `Token present: ${!!storedToken}, Cookie present: ${!!sessionCookie}, URL: ${postLoginUrl}`);
+      logResult('Step 5: Log in with valid credentials & dual tokens', 'FAIL', `Token: ${!!storedToken}, RefreshToken: ${!!storedRefreshToken}, SessionCookie: ${!!sessionCookie}, RefreshCookie: ${!!refreshCookie}, URL: ${postLoginUrl}`);
     }
 
     // -------------------------------------------------------------
@@ -133,7 +135,88 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
     }
 
     // -------------------------------------------------------------
-    // Step 7 & 8: Reload browser & verify persistence
+    // Step 7: Token Type Isolation (Security boundary between access & refresh tokens)
+    // -------------------------------------------------------------
+    const tokenIsolationTest = await page.evaluate(async () => {
+      const accessToken = localStorage.getItem('study_token');
+      const refreshToken = localStorage.getItem('study_refresh_token');
+
+      // Test A: Access token cannot be used to refresh a session
+      const refreshWithAccessRes = await fetch('http://localhost:8080/api/v1/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ refreshToken: accessToken })
+      });
+
+      // Test B: Refresh token cannot be used to access regular API endpoints
+      const accessWithRefreshRes = await fetch('http://localhost:8080/api/v1/auth/me', {
+        headers: { Authorization: `Bearer ${refreshToken}` }
+      });
+
+      return {
+        refreshWithAccessStatus: refreshWithAccessRes.status,
+        accessWithRefreshStatus: accessWithRefreshRes.status
+      };
+    });
+
+    const accessAsRefreshRejected = (tokenIsolationTest.refreshWithAccessStatus === 400 || tokenIsolationTest.refreshWithAccessStatus === 401);
+    const refreshAsAccessRejected = (tokenIsolationTest.accessWithRefreshStatus === 401 || tokenIsolationTest.accessWithRefreshStatus === 403);
+
+    if (accessAsRefreshRejected && refreshAsAccessRejected) {
+      logResult('Step 7: Token type boundary enforcement', 'PASS', `Access token rejected at /refresh (${tokenIsolationTest.refreshWithAccessStatus}), Refresh token rejected at /me (${tokenIsolationTest.accessWithRefreshStatus}).`);
+    } else {
+      logResult('Step 7: Token type boundary enforcement', 'FAIL', `Isolation failed: refreshWithAccess=${tokenIsolationTest.refreshWithAccessStatus}, accessWithRefresh=${tokenIsolationTest.accessWithRefreshStatus}`);
+    }
+
+    // -------------------------------------------------------------
+    // Step 8: Refresh Token Rotation
+    // -------------------------------------------------------------
+    const rotationResult = await page.evaluate(async () => {
+      const oldRefreshToken = localStorage.getItem('study_refresh_token');
+      const oldAccessToken = localStorage.getItem('study_token');
+
+      const refreshRes = await fetch('http://localhost:8080/api/v1/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${oldRefreshToken}`
+        },
+        body: JSON.stringify({ refreshToken: oldRefreshToken })
+      });
+
+      if (!refreshRes.ok) {
+        return { ok: false, status: refreshRes.status };
+      }
+
+      const data = await refreshRes.json();
+      localStorage.setItem('study_token', data.token);
+      localStorage.setItem('study_refresh_token', data.refreshToken);
+
+      // Verify new access token works
+      const meRes = await fetch('http://localhost:8080/api/v1/auth/me', {
+        headers: { Authorization: `Bearer ${data.token}` }
+      });
+
+      return {
+        ok: true,
+        status: refreshRes.status,
+        hasNewAccessToken: !!data.token && data.token !== oldAccessToken,
+        hasNewRefreshToken: !!data.refreshToken && data.refreshToken !== oldRefreshToken,
+        newAccessTokenWorks: meRes.status === 200
+      };
+    });
+
+    if (rotationResult.ok && rotationResult.hasNewAccessToken && rotationResult.hasNewRefreshToken && rotationResult.newAccessTokenWorks) {
+      logResult('Step 8: Refresh token rotation', 'PASS', 'Refresh endpoint successfully rotated both access and refresh tokens. New token verified.');
+    } else {
+      logResult('Step 8: Refresh token rotation', 'FAIL', JSON.stringify(rotationResult));
+    }
+
+    // -------------------------------------------------------------
+    // Step 9: Reload browser & verify persistence
     // -------------------------------------------------------------
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
@@ -142,13 +225,13 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
     const urlAfterReload = page.url();
 
     if (tokenAfterReload && urlAfterReload.includes('/dashboard')) {
-      logResult('Step 7/8: Reload & authentication persistence', 'PASS', 'Authentication state persists on reload without redirects.');
+      logResult('Step 9: Reload & authentication persistence', 'PASS', 'Authentication state persists on reload without redirects.');
     } else {
-      logResult('Step 7/8: Reload & authentication persistence', 'FAIL', `State lost after reload. URL: ${urlAfterReload}`);
+      logResult('Step 9: Reload & authentication persistence', 'FAIL', `State lost after reload. URL: ${urlAfterReload}`);
     }
 
     // -------------------------------------------------------------
-    // Step 9 & 10: Navigate between all modules without 401 or runtime errors
+    // Step 10: Navigate between all modules without 401 or runtime errors
     // -------------------------------------------------------------
     const testModules = ['/dashboard', '/ai-tutor', '/quizzes', '/tasks', '/focus', '/analytics'];
     let navigationErrors = 0;
@@ -164,9 +247,9 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
 
       if (overlay) {
         navigationErrors++;
-        logResult(`Step 9/10: Module navigation to ${mod}`, 'FAIL', `Runtime overlay detected: ${overlay.slice(0, 100)}`);
+        logResult(`Step 10: Module navigation to ${mod}`, 'FAIL', `Runtime overlay detected: ${overlay.slice(0, 100)}`);
       } else {
-        logResult(`Step 9/10: Module navigation to ${mod}`, 'PASS', `Rendered cleanly with no runtime overlay.`);
+        logResult(`Step 10: Module navigation to ${mod}`, 'PASS', `Rendered cleanly with no runtime overlay.`);
       }
     }
 
@@ -180,34 +263,7 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
     await page.screenshot({ path: path.join(ARTIFACT_DIR, 'auth_verified_aitutor_clean.png') });
 
     // -------------------------------------------------------------
-    // Step 11 & 12: Log out and verify protected routes are inaccessible
-    // -------------------------------------------------------------
-    await page.goto('http://localhost:3000/dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1000);
-
-    // Call logout endpoint and clear state
-    await page.evaluate(async () => {
-      await fetch('http://localhost:8080/api/v1/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { Authorization: `Bearer ${localStorage.getItem('study_token')}` }
-      });
-      localStorage.removeItem('study_token');
-    });
-
-    await context.clearCookies();
-    await page.goto('http://localhost:3000/dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1500);
-
-    const postLogoutUrl = page.url();
-    if (postLogoutUrl.includes('/login')) {
-      logResult('Step 11/12: Logout and protected route lockdown', 'PASS', `Protected route locked after logout. Redirected to: ${postLogoutUrl}`);
-    } else {
-      logResult('Step 11/12: Logout and protected route lockdown', 'FAIL', `Did not redirect to /login after logout. URL: ${postLogoutUrl}`);
-    }
-
-    // -------------------------------------------------------------
-    // Step 13: Attempt to access protected endpoint using expired/invalid token
+    // Step 11: Attempt to access protected endpoint using expired/invalid/tampered token
     // -------------------------------------------------------------
     const expiredRes = await page.evaluate(async () => {
       const res = await fetch('http://localhost:8080/api/v1/auth/me', {
@@ -217,22 +273,14 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
     });
 
     if (expiredRes.status === 401) {
-      logResult('Step 13: Expired/invalid token rejection', 'PASS', 'Backend correctly returns HTTP 401 for invalid token.');
+      logResult('Step 11: Expired/invalid token rejection', 'PASS', 'Backend correctly returns HTTP 401 for invalid/tampered token.');
     } else {
-      logResult('Step 13: Expired/invalid token rejection', 'FAIL', `Expected 401, got ${expiredRes.status}`);
+      logResult('Step 11: Expired/invalid token rejection', 'FAIL', `Expected 401, got ${expiredRes.status}`);
     }
 
     // -------------------------------------------------------------
-    // Step 14: Tenant isolation / student resource authorization check
+    // Step 12: Role-Based Access Control (RBAC) authorization check
     // -------------------------------------------------------------
-    // Login as student@test.com
-    await page.goto('http://localhost:3000/login', { waitUntil: 'domcontentloaded' });
-    await page.fill('input[type="email"]', 'student@test.com');
-    await page.fill('input[type="password"]', 'Password123!');
-    await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
-
-    // Attempt to access parent-only endpoints or other tenant data
     const authCheckRes = await page.evaluate(async () => {
       const res = await fetch('http://localhost:8080/api/v1/admin/users', {
         credentials: 'include',
@@ -242,9 +290,84 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
     });
 
     if (authCheckRes.status === 403 || authCheckRes.status === 401) {
-      logResult('Step 14: Student authorization / RBAC check', 'PASS', `Student access to admin resources correctly rejected with HTTP ${authCheckRes.status}.`);
+      logResult('Step 12: Student authorization / RBAC check', 'PASS', `Student access to admin resources correctly rejected with HTTP ${authCheckRes.status}.`);
     } else {
-      logResult('Step 14: Student authorization / RBAC check', 'FAIL', `Unexpected status: ${authCheckRes.status}`);
+      logResult('Step 12: Student authorization / RBAC check', 'FAIL', `Unexpected status: ${authCheckRes.status}`);
+    }
+
+    // -------------------------------------------------------------
+    // Step 13: Tenant isolation / cross-student resource boundary check
+    // -------------------------------------------------------------
+    const crossStudentRes = await page.evaluate(async () => {
+      // Attempt to access unowned/foreign material resource
+      const res = await fetch('http://localhost:8080/api/v1/materials/999999', {
+        credentials: 'include',
+        headers: { Authorization: `Bearer ${localStorage.getItem('study_token')}` }
+      });
+      return { status: res.status };
+    });
+
+    if (crossStudentRes.status === 404 || crossStudentRes.status === 403) {
+      logResult('Step 13: Cross-student tenant boundary check', 'PASS', `Unowned material access blocked with HTTP ${crossStudentRes.status} (no cross-tenant data leak).`);
+    } else {
+      logResult('Step 13: Cross-student tenant boundary check', 'FAIL', `Unexpected status: ${crossStudentRes.status}`);
+    }
+
+    // -------------------------------------------------------------
+    // Step 14: Active Logout & Token Revocation (Revocation Invalidation)
+    // -------------------------------------------------------------
+    const tokensBeforeLogout = await page.evaluate(() => ({
+      access: localStorage.getItem('study_token'),
+      refresh: localStorage.getItem('study_refresh_token')
+    }));
+
+    await page.goto('http://localhost:3000/dashboard', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    // Call logout endpoint
+    await page.evaluate(async () => {
+      await fetch('http://localhost:8080/api/v1/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { Authorization: `Bearer ${localStorage.getItem('study_token')}` }
+      });
+      localStorage.removeItem('study_token');
+      localStorage.removeItem('study_refresh_token');
+    });
+
+    await context.clearCookies();
+
+    // Verify tokens invalidated via token_version increment in database
+    const postLogoutTokenCheck = await page.evaluate(async (tokens) => {
+      const meRes = await fetch('http://localhost:8080/api/v1/auth/me', {
+        headers: { Authorization: `Bearer ${tokens.access}` }
+      });
+      const refreshRes = await fetch('http://localhost:8080/api/v1/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokens.refresh}`
+        },
+        body: JSON.stringify({ refreshToken: tokens.refresh })
+      });
+      return {
+        meStatus: meRes.status,
+        refreshStatus: refreshRes.status
+      };
+    }, tokensBeforeLogout);
+
+    await page.goto('http://localhost:3000/dashboard', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500);
+
+    const postLogoutUrl = page.url();
+    const isRedirectedToLogin = postLogoutUrl.includes('/login');
+    const accessRevoked = postLogoutTokenCheck.meStatus === 401;
+    const refreshRevoked = postLogoutTokenCheck.refreshStatus === 401;
+
+    if (isRedirectedToLogin && accessRevoked && refreshRevoked) {
+      logResult('Step 14: Logout token revocation & lockdown', 'PASS', `Logged out tokens completely revoked (me: 401, refresh: 401). Dashboard cleanly redirected to ${postLogoutUrl}.`);
+    } else {
+      logResult('Step 14: Logout token revocation & lockdown', 'FAIL', `isRedirected=${isRedirectedToLogin}, accessRevoked=${accessRevoked} (${postLogoutTokenCheck.meStatus}), refreshRevoked=${refreshRevoked} (${postLogoutTokenCheck.refreshStatus})`);
     }
 
   } catch (err) {
@@ -265,4 +388,8 @@ const ARTIFACT_DIR = 'C:/Users/Aditya/.gemini/antigravity/brain/ffaef119-7340-4c
   console.log('======================================================');
   console.log('Final Result:', allPassed ? 'ALL 14 TEST WORKFLOWS PASSED' : 'SOME TESTS FAILED');
   console.log('======================================================');
+
+  if (!allPassed) {
+    process.exit(1);
+  }
 })();

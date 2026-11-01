@@ -53,9 +53,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const hasNumberOrSymbol = /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
 
-  function handleAuthSuccess(userRole: string, token?: string) {
+  function handleAuthSuccess(userRole: string, token?: string, refreshToken?: string) {
     if (token) {
-      setAuthToken(token);
+      setAuthToken(token, refreshToken);
     }
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("smartstudy:auth_change"));
@@ -86,7 +86,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       if (!res.ok) {
         throw new Error(body.message || body.error || body.detail || "Unable to sign in. Please verify your credentials.");
       }
-      handleAuthSuccess(body.role, body.token);
+      handleAuthSuccess(body.role, body.token, body.refreshToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : "The API could not be reached. Ensure the backend server is running.");
     } finally {
@@ -124,10 +124,10 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       }
 
       if (isLogin) {
-        handleAuthSuccess(data.role, data.token);
+        handleAuthSuccess(data.role, data.token, data.refreshToken);
       } else {
         if (data.token) {
-          setAuthToken(data.token);
+          setAuthToken(data.token, data.refreshToken);
         }
         await performLogin(email, password);
       }

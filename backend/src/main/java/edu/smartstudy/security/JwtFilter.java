@@ -1,4 +1,5 @@
 package edu.smartstudy.security;
+
 import edu.smartstudy.user.User;
 import edu.smartstudy.user.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -29,7 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
         Cookie[] cs = req.getCookies();
         if (cs != null) {
             for (Cookie c : cs) {
-                if (c.getName().equals("study_session")) {
+                if ("study_session".equals(c.getName())) {
                     rawToken = c.getValue();
                     break;
                 }
@@ -45,9 +46,17 @@ public class JwtFilter extends OncePerRequestFilter {
         if (rawToken != null && !rawToken.isBlank()) {
             try {
                 Claims claims = tokens.parse(rawToken);
+                String tokenType = claims.get("token_type", String.class);
+
+                // Security rule: Refresh tokens must NEVER be used to access regular API endpoints
+                if ("refresh".equalsIgnoreCase(tokenType)) {
+                    chain.doFilter(req, res);
+                    return;
+                }
+
                 String email = claims.getSubject();
                 Integer tokenVersion = claims.get("token_version", Integer.class);
-                
+
                 var userOpt = users.findEnabledByEmailIgnoreCase(email);
                 if (userOpt.isPresent()) {
                     User user = userOpt.get();

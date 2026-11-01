@@ -15,12 +15,29 @@ export function getAuthToken(): string | null {
   return null;
 }
 
-export function setAuthToken(token: string | null): void {
+export function getRefreshToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('study_refresh_token');
+  }
+  return null;
+}
+
+export function setAuthToken(token: string | null, refreshToken?: string | null): void {
   if (typeof window !== 'undefined') {
     if (token) {
       localStorage.setItem('study_token', token);
     } else {
       localStorage.removeItem('study_token');
+    }
+
+    if (refreshToken !== undefined) {
+      if (refreshToken) {
+        localStorage.setItem('study_refresh_token', refreshToken);
+      } else {
+        localStorage.removeItem('study_refresh_token');
+      }
+    } else if (!token) {
+      localStorage.removeItem('study_refresh_token');
     }
   }
 }
@@ -61,18 +78,21 @@ async function attemptTokenRefresh(): Promise<string | null> {
 
   refreshPromise = (async () => {
     try {
-      const token = getAuthToken();
+      const refreshToken = getRefreshToken();
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      if (refreshToken) {
+        headers['Authorization'] = `Bearer ${refreshToken}`;
       }
+
+      const bodyPayload = refreshToken ? JSON.stringify({ refreshToken }) : undefined;
 
       const res = await fetch(`${API_BASE}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
         headers,
+        body: bodyPayload,
       });
 
       if (!res.ok) {
@@ -81,7 +101,7 @@ async function attemptTokenRefresh(): Promise<string | null> {
 
       const data = await res.json().catch(() => null);
       if (data && data.token) {
-        setAuthToken(data.token);
+        setAuthToken(data.token, data.refreshToken);
         return data.token as string;
       }
       return null;
