@@ -338,6 +338,9 @@ erDiagram
 
 ## 8. Step-by-Step Setup, Installation & Run Guide
 
+> [!TIP]
+> For the dedicated, expanded run manual with step-by-step terminal instructions, test execution, and troubleshooting, see [Step-by-Step Run & Execution Guide](HOW_TO_RUN_STEP_BY_STEP.md).
+
 ### 8.1 Prerequisites
 * **Java:** JDK 21 LTS (Eclipse Temurin recommended)
 * **Node.js:** Node.js 22 LTS (or 20.9.0+) with `npm`
@@ -513,3 +516,4 @@ flowchart LR
   1. Start MySQL: `net start mysql` (Windows) or `brew services start mysql` (macOS).
   2. Check connectivity: `mysql -u root -p -e "SHOW DATABASES;"`.
   3. Verify port setting in `backend/src/main/resources/application.yml` matches your local MySQL server.
+

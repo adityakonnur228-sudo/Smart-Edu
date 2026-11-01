@@ -2,6 +2,7 @@
 
 > [!NOTE]
 > 📖 **Comprehensive Master Guide:** For an exhaustive, single-source reference explaining architecture, microservices, all 10 modules, database schemas, security models, local setup, CI/CD, and cloud deployment, see the [Smart Study Portal Complete Master Guide](docs/SMART_STUDY_PORTAL_COMPLETE_MASTER_GUIDE.md).
+> 🚀 **Quick Start & Execution Guide:** For step-by-step instructions on running the application locally via one-click script or dedicated terminals, see the [Step-by-Step Run Guide](docs/HOW_TO_RUN_STEP_BY_STEP.md).
 
 An enterprise-grade, full-stack educational operating system designed for self-directed learning. Smart Study Portal transforms unstructured academic materials (PDFs, DOCX, PPTX, XLSX, TXT) into a closed-loop active learning rhythm featuring local Retrieval-Augmented Generation (RAG), SuperMemo SM-2 spaced repetition, distraction-free cognitive focus tracking, dynamic quizzes with factual grounding, and dedicated privacy-preserving parent and administrative portals.
 

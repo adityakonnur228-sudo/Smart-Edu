@@ -1,6 +1,6 @@
 # How to Run the Project (Smart Study Portal)
 
-> **Quick Reference:** For the complete, detailed production guide including architecture flowcharts, automated health checks, test suite commands, and troubleshooting, see **[`RUN_GUIDE.md`](./RUN_GUIDE.md)**.
+> **Quick Reference:** For the complete, authoritative step-by-step production run guide including architecture flowcharts, automated health checks, test suite commands, and troubleshooting, see **[docs/HOW_TO_RUN_STEP_BY_STEP.md](./docs/HOW_TO_RUN_STEP_BY_STEP.md)** or **[RUN_GUIDE.md](./RUN_GUIDE.md)**.
 
 ---
 
