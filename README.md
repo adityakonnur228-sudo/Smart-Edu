@@ -1,5 +1,8 @@
 # Smart Study Portal (Smart Edu)
 
+> [!NOTE]
+> 📖 **Comprehensive Master Guide:** For an exhaustive, single-source reference explaining architecture, microservices, all 10 modules, database schemas, security models, local setup, CI/CD, and cloud deployment, see the [Smart Study Portal Complete Master Guide](docs/SMART_STUDY_PORTAL_COMPLETE_MASTER_GUIDE.md).
+
 An enterprise-grade, full-stack educational operating system designed for self-directed learning. Smart Study Portal transforms unstructured academic materials (PDFs, DOCX, PPTX, XLSX, TXT) into a closed-loop active learning rhythm featuring local Retrieval-Augmented Generation (RAG), SuperMemo SM-2 spaced repetition, distraction-free cognitive focus tracking, dynamic quizzes with factual grounding, and dedicated privacy-preserving parent and administrative portals.
 
 [![Java](https://img.shields.io/badge/Java-21%20%7C%2025-orange.svg?logo=openjdk)](https://openjdk.org/)
