@@ -15,6 +15,8 @@ def _to_data(res):
 
 class ServiceTests(unittest.TestCase):
     def test_health(self):
+        from unittest.mock import AsyncMock, patch, MagicMock
+
         async def health_and_close_clients():
             try:
                 return await health()
@@ -22,9 +24,39 @@ class ServiceTests(unittest.TestCase):
                 await close_ollama_client()
                 await close_vector_store()
 
+        # 1. Unmocked runtime check: process liveness is operational, status reflects actual readiness
         res = self.run_async(health_and_close_clients())
         status = res.status if hasattr(res, "status") else res["status"]
-        self.assertIn(status, ["ok", "healthy"])
+        liveness = res.liveness if hasattr(res, "liveness") else res.get("liveness")
+        readiness = res.readiness if hasattr(res, "readiness") else res.get("readiness")
+        self.assertEqual(liveness, "healthy")
+        self.assertIn(status, ["healthy", "degraded"])
+        self.assertEqual(status, readiness)
+
+        # 2. Mocked healthy external dependency: verify readiness and status report healthy
+        mock_healthy = MagicMock()
+        mock_healthy.health_check = AsyncMock(return_value={
+            "server": "healthy",
+            "chat_model": {"available": True, "name": "smartstudy-tutor"}
+        })
+        with patch("app.main.get_ollama_client", return_value=mock_healthy):
+            res_h = self.run_async(health())
+            self.assertEqual(res_h.liveness, "healthy")
+            self.assertEqual(res_h.readiness, "healthy")
+            self.assertEqual(res_h.status, "healthy")
+
+        # 3. Mocked degraded external dependency: verify readiness and status report degraded without masking
+        mock_degraded = MagicMock()
+        mock_degraded.health_check = AsyncMock(return_value={
+            "server": "offline",
+            "error": "Connection refused",
+            "chat_model": {"available": False}
+        })
+        with patch("app.main.get_ollama_client", return_value=mock_degraded):
+            res_d = self.run_async(health())
+            self.assertEqual(res_d.liveness, "healthy")
+            self.assertEqual(res_d.readiness, "degraded")
+            self.assertEqual(res_d.status, "degraded")
 
     def test_keyword_extraction(self):
         result = self.run_async(keywords(TextInput(text="Photosynthesis converts light energy into chemical energy. Photosynthesis supports plant growth.")))
@@ -35,9 +67,49 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(result["topics"], [])
 
     def test_summary_is_marked_as_draft(self):
-        result = _to_data(self.run_async(summarize(TextInput(text="A cell is the basic unit of life. Cells form tissues in many organisms."))))
-        self.assertIn("basic unit", result["summary"])
-        self.assertIn("Verify", result["notice"])
+        from unittest.mock import AsyncMock, patch, MagicMock
+
+        # Mock OllamaClient with a deterministic summary response
+        mock_client = MagicMock()
+        mock_client.config = MagicMock(chat_model="smartstudy-tutor")
+        mock_client.health_check = AsyncMock(return_value={
+            "server": "healthy",
+            "chat_model": {"available": True, "name": "smartstudy-tutor"}
+        })
+        mock_client.chat = AsyncMock(return_value={
+            "message": {"content": "A cell is the basic unit of life and foundational biological structure."}
+        })
+
+        with patch("app.main.get_ollama_client", return_value=mock_client):
+            # Test A: Extractive fallback draft for concise text
+            result = _to_data(self.run_async(summarize(TextInput(text="A cell is the basic unit of life. Cells form tissues in many organisms."))))
+            self.assertIn("basic unit", result["summary"])
+            self.assertIn("Verify", result["notice"])
+            self.assertEqual(result["sections_processed"], 1)
+            self.assertEqual(result["method"], "extractive_fallback")
+
+            # Test B: Full document summarization using mocked LLM
+            long_text = "A cell is the basic unit of life. " * 20
+            result_llm = _to_data(self.run_async(summarize(TextInput(text=long_text))))
+            self.assertIn("basic unit", result_llm["summary"])
+            self.assertIn("Verify", result_llm["notice"])
+            self.assertIn("direct_llm", result_llm["method"])
+
+    def test_summary_handles_ollama_unavailable(self):
+        from unittest.mock import AsyncMock, patch, MagicMock
+
+        # Verify graceful error handling when Ollama service is unreachable
+        mock_client = MagicMock()
+        mock_client.health_check = AsyncMock(return_value={
+            "server": "offline",
+            "error": "Connection refused"
+        })
+
+        with patch("app.main.get_ollama_client", return_value=mock_client):
+            result = _to_data(self.run_async(summarize(TextInput(text="A cell is the basic unit of life."))))
+            self.assertEqual(result["summary"], "Local AI service unavailable for summarization.")
+            self.assertEqual(result["method"], "unavailable")
+            self.assertEqual(result["sections_processed"], 0)
 
     def test_extracts_utf8_text(self):
         result = self.run_async(extract(UploadFile(filename="notes.txt", file=BytesIO(b"A short study note."))))

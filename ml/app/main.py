@@ -182,6 +182,8 @@ class HealthResponse(BaseModel):
     service: str
     ollama: Dict[str, Any]
     vector_store: Dict[str, Any]
+    liveness: str = "healthy"
+    readiness: str = "healthy"
 
 
 # =============================================================================
@@ -196,7 +198,12 @@ async def verify_internal_token(x_internal_token: Optional[str] = Header(None)):
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    if request.url.path in ["/health", "/ml/v1/health", "/ml/v1/test-key", "/docs", "/openapi.json", "/redoc"]:
+    if request.url.path in [
+        "/health", "/ml/v1/health",
+        "/health/live", "/ml/v1/health/live",
+        "/health/ready", "/ml/v1/health/ready",
+        "/ml/v1/test-key", "/docs", "/openapi.json", "/redoc"
+    ]:
         return await call_next(request)
     expected = os.getenv("ML_INTERNAL_TOKEN", "dev-internal-token-change-me")
     token = request.headers.get("X-Internal-Token")
@@ -1385,25 +1392,49 @@ async def summarize_document_map_reduce(
 @app.get("/ml/v1/health", response_model=HealthResponse)
 @app.get("/health", response_model=HealthResponse)
 async def health():
-    """Comprehensive health check including Ollama and vector store."""
+    """Comprehensive health check distinguishing process liveness from dependency readiness."""
     ollama = await get_ollama_client()
     ollama_health = await ollama.health_check()
 
     vector_store = await get_vector_store()
     vs_stats = vector_store.get_stats()
 
-    overall_status = "healthy"
-    if ollama_health.get("server") != "healthy":
-        overall_status = "degraded"
-    if not ollama_health.get("chat_model", {}).get("available", False):
-        overall_status = "degraded"
+    is_ollama_ready = (
+        ollama_health.get("server") == "healthy"
+        and ollama_health.get("chat_model", {}).get("available", False)
+    )
+
+    # Liveness: whether the FastAPI process itself is operational
+    liveness = "healthy"
+
+    # Readiness: whether required external dependencies (Ollama LLM) are available
+    readiness = "healthy" if is_ollama_ready else "degraded"
+    overall_status = readiness
 
     return HealthResponse(
         status=overall_status,
         service="smart-study-ml-local",
         ollama=ollama_health,
         vector_store=vs_stats,
+        liveness=liveness,
+        readiness=readiness,
     )
+
+
+@app.get("/ml/v1/health/live")
+@app.get("/health/live")
+async def health_liveness():
+    """Liveness probe: verifies that the FastAPI process itself is operational."""
+    return {"status": "healthy", "liveness": "healthy", "service": "smart-study-ml-local"}
+
+
+@app.get("/ml/v1/health/ready")
+@app.get("/health/ready")
+async def health_readiness():
+    """Readiness probe: returns 200 if operational or 503 if downstream dependencies are degraded."""
+    h = await health()
+    status_code = 200 if h.readiness == "healthy" else 503
+    return JSONResponse(status_code=status_code, content=h.model_dump())
 
 
 @app.post("/ml/v1/test-key")
